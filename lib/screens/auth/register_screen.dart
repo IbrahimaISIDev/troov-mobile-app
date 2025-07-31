@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../utils/localization.dart';
-import '../../utils/theme.dart';
-import '../../models/user.dart';
-import '../../services/auth_service.dart';
+import 'package:troov_app/utils/localization.dart';
+import 'package:troov_app/utils/theme.dart';
+import 'package:troov_app/models/user.dart';
+import 'package:troov_app/services/auth_service.dart';
+import 'package:troov_app/models/enums.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);

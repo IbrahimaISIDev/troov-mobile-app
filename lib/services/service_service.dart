@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
-import '../models/enums.dart';
-import '../models/search_filters.dart';
-import '../models/service.dart';
-import '../models/user.dart';
-import '../models/service_provider.dart';
-import 'auth_service.dart';
+import 'package:troov_app/models/enums.dart';
+import 'package:troov_app/models/search_filters.dart';
+import 'package:troov_app/models/service.dart';
+import 'package:troov_app/models/user.dart';
+import 'package:troov_app/models/service_provider.dart';
+import 'package:troov_app/services/auth_service.dart';
 
 class ServiceService {
   static const String baseUrl = 'https://troov.api.com';

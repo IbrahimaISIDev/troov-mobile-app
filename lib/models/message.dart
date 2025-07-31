@@ -1,5 +1,5 @@
-import 'enums.dart';
-import 'user.dart';
+import 'package:troov_app/models/enums.dart';
+import 'package:troov_app/models/user.dart';
 
 class Message {
   final String id;

@@ -1,3 +1,5 @@
+import 'package:troov_app/models/enums.dart';
+
 class User {
   final String id;
   final String email;
@@ -59,8 +61,6 @@ class User {
     };
   }
 }
-
-import 'enums.dart';
 
 class UserLocation {
   final double latitude;

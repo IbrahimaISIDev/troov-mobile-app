@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/booking.dart';
+import 'package:troov_app/models/booking.dart';
 import 'auth_service.dart';
 
 class BookingService {

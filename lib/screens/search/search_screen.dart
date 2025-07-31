@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../utils/localization.dart';
-import '../../utils/theme.dart';
-import '../../models/service.dart';
-import '../../models/user.dart';
-import '../../services/service_service.dart';
-import '../../widgets/service_card.dart';
-import '../../widgets/provider_card.dart';
-import 'filter_screen.dart';
+import 'package:troov_app/utils/localization.dart';
+import 'package:troov_app/utils/theme.dart';
+import 'package:troov_app/models/service.dart';
+import 'package:troov_app/models/user.dart';
+import 'package:troov_app/services/service_service.dart';
+import 'package:troov_app/widgets/service_card.dart';
+import 'package:troov_app/widgets/provider_card.dart';
+import 'package:troov_app/models/enums.dart';
+import 'package:troov_app/models/search_filters.dart';
+import 'package:troov_app/models/service_provider.dart';
+import 'package:troov_app/screens/search/filter_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   @override

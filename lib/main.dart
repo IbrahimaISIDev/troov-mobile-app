@@ -59,6 +59,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Troov',
       theme: _isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
       locale: _locale,
       localizationsDelegates: [
         AppLocalizations.delegate,

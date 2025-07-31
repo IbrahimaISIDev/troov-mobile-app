@@ -1,6 +1,6 @@
-import 'enums.dart';
-import 'service.dart';
-import 'user.dart';
+import 'package:troov_app/models/enums.dart';
+import 'package:troov_app/models/user.dart';
+import 'package:troov_app/models/service.dart';
 
 class Booking {
   final String id;

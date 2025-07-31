@@ -1,6 +1,7 @@
-import 'enums.dart';
-import 'user.dart';
-import 'service_location.dart';
+import 'package:troov_app/models/enums.dart';
+import 'package:troov_app/models/user.dart';
+import 'package:troov_app/models/service_location.dart';
+import 'package:troov_app/models/service.dart';
 
 class ServiceProvider {
   final String userId;

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user.dart';
+import 'package:troov_app/models/user.dart';
+import 'package:troov_app/models/enums.dart';
+
 
 class AuthService {
   static const String baseUrl = 'https://troov.api.com';
