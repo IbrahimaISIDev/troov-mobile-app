@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:troov_app/models/service_provider.dart';
 import '../../utils/localization.dart';
 import '../../utils/theme.dart';
 import '../../models/service.dart';

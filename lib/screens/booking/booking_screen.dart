@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:troov_app/models/enums.dart';
+import 'package:troov_app/models/service_provider.dart';
 import '../../utils/localization.dart';
 import '../../utils/theme.dart';
 import '../../models/service.dart';
@@ -86,6 +88,9 @@ class _BookingScreenState extends State<BookingScreen> with TickerProviderStateM
       case PriceType.perKm:
         _totalPrice = widget.service.price * 10; // Distance estimée
         break;
+      case PriceType.perUnit:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
     setState(() {});
   }

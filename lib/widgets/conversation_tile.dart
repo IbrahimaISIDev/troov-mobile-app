@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:troov_app/models/enums.dart';
 import '../models/message.dart';
 import '../utils/theme.dart';
 
