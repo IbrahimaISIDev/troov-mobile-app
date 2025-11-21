@@ -628,7 +628,8 @@ class ParticlesPainter extends CustomPainter {
       double animatedSize = particle.size * (0.5 + 0.5 * math.sin(animation * 3 * math.pi + particle.phase));
       
       // Opacité animée
-      double animatedOpacity = particle.opacity * (0.3 + 0.7 * math.sin(animation * 2 * math.pi + particle.phase));
+      double osc = (math.sin(animation * 2 * math.pi + particle.phase) + 1) / 2; // [0,1]
+      double animatedOpacity = (particle.opacity * (0.3 + 0.7 * osc)).clamp(0.0, 1.0);
       
       final paint = Paint()
         ..color = particle.color.withOpacity(animatedOpacity)
@@ -639,7 +640,7 @@ class ParticlesPainter extends CustomPainter {
       // Effet de halo pour certaines particules
       if (particle.size > 4) {
         final haloPaint = Paint()
-          ..color = particle.color.withOpacity(animatedOpacity * 0.3)
+          ..color = particle.color.withOpacity((animatedOpacity * 0.3).clamp(0.0, 1.0))
           ..style = PaintingStyle.fill;
         
         canvas.drawCircle(Offset(x, y), animatedSize * 2, haloPaint);

@@ -167,12 +167,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   Widget _buildImageGrid(List<String> images) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final availableHeight = screenHeight * 0.35; // Réduit pour s'adapter aux petits écrans
-    
-    return Container(
-      height: availableHeight,
-      child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight * 0.90; // vignettes ~10% plus petites
+        return SizedBox(
+          height: availableHeight,
+          child: Column(
         children: [
           Expanded(
             child: Row(
@@ -180,15 +180,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 2,
                   child: Container(
-                    margin: EdgeInsets.only(right: 4),
+                    margin: EdgeInsets.only(right: 3),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16), // Réduit pour petits écrans
+                      borderRadius: BorderRadius.circular(14), // Légèrement réduit
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10, // Réduit
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8, // Légèrement réduit
                               offset: Offset(0, 5), // Réduit
                             ),
                           ],
@@ -217,7 +217,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 24, // Réduit
+                                  size: 22, // Légèrement réduit
                                 ),
                               ),
                             );
@@ -230,15 +230,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 4,
                   child: Container(
-                    margin: EdgeInsets.only(left: 4),
+                    margin: EdgeInsets.only(left: 3),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8,
                               offset: Offset(0, 5),
                             ),
                           ],
@@ -267,7 +267,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 24,
+                                  size: 22,
                                 ),
                               ),
                             );
@@ -280,22 +280,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ],
             ),
           ),
-          SizedBox(height: 6), // Réduit
+          SizedBox(height: 4), // Légèrement réduit
           Expanded(
             child: Row(
               children: [
                 Expanded(
                   flex: 4,
                   child: Container(
-                    margin: EdgeInsets.only(right: 4),
+                    margin: EdgeInsets.only(right: 3),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
+                              blurRadius: 8,
                               offset: Offset(0, 5),
                             ),
                           ],
@@ -324,7 +324,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 24,
+                                  size: 22,
                                 ),
                               ),
                             );
@@ -337,15 +337,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 2,
                   child: Container(
-                    margin: EdgeInsets.only(left: 4),
+                    margin: EdgeInsets.only(left: 3),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
+                              blurRadius: 8,
                               offset: Offset(0, 5),
                             ),
                           ],
@@ -374,7 +374,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 24,
+                                  size: 22,
                                 ),
                               ),
                             );
@@ -390,18 +390,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _buildServicePage(ServiceData service) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildImageGrid(service.images),
-          SizedBox(height: 300.0), // Espacement avec le cadre du bas
-        ],
-      ),
+      child: _buildImageGrid(service.images),
     );
   }
 
@@ -412,7 +408,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final isSmallScreen = screenHeight < 700;
     
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlue.withOpacity(0.05),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
           children: [
@@ -433,7 +429,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                                    color: AppTheme.primaryBlue.withOpacity(0.06),
                                     blurRadius: 6,
                                     spreadRadius: 1,
                                   ),
@@ -459,7 +455,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             ),
                           ],
                         ),
-                        SizedBox(height: isSmallScreen ? 12.0 : 16.0),
+                        SizedBox(height: isSmallScreen ? 8.0 : 12.0),
                         Text(
                           'Bienvenue sur Troov',
                           style: TextStyle(
@@ -474,7 +470,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           'Votre allié pour dénicher des services fiables près de chez vous.',
                           style: TextStyle(
                             fontSize: isSmallScreen ? 14.0 : 16.0,
-                            color: Colors.grey[600],
+                            color: Colors.grey[700],
                             height: 1.4,
                           ),
                           textAlign: TextAlign.center,
@@ -484,41 +480,86 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   ),
                 ),
                 SizedBox(height: 16.0), // Espacement avec les images
-                Expanded(
-                  child: AnimatedBuilder(
-                    animation: _contentAnimationController,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _contentFadeAnimation.value,
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: AnimatedBuilder(
-                                animation: _gridAnimationController,
-                                builder: (context, child) {
-                                  return Opacity(
-                                    opacity: _gridFadeAnimation.value,
-                                    child: PageView.builder(
-                                      controller: _pageController,
-                                      itemCount: _services.length,
-                                      onPageChanged: (index) {
-                                        setState(() {
-                                          _currentServiceIndex = index;
-                                        });
-                                      },
-                                      itemBuilder: (context, index) {
-                                        return _buildServicePage(_services[index]);
-                                      },
+                AnimatedBuilder(
+                  animation: _contentAnimationController,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _contentFadeAnimation.value,
+                      child: Column(
+                        children: [
+                          // Carrousel d'images juste sous le texte
+                          AnimatedBuilder(
+                            animation: _gridAnimationController,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: _gridFadeAnimation.value,
+                                child: SizedBox(
+                                  height: MediaQuery.of(context).size.height * 0.26,
+                                  child: PageView.builder(
+                                    controller: _pageController,
+                                    itemCount: _services.length,
+                                    onPageChanged: (index) {
+                                      setState(() {
+                                        _currentServiceIndex = index;
+                                      });
+                                    },
+                                    itemBuilder: (context, index) {
+                                      return _buildServicePage(_services[index]);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          SizedBox(height: isSmallScreen ? 18 : 26),
+                          // Paragraphe sous les images
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Encore plus de raisons de nous reTROOVer',
+                                  style: TextStyle(
+                                    fontSize: isSmallScreen ? 14 : 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 6,  
+                                  children: const [
+                                    Text('+ 350 artisans'),
+                                    Text('+ 8500 membres'),
+                                    Text('769 produits en ligne'),
+                                    Text('+33 partenaires'),
+                                    Text('+ de 400 collaborateurs'),
+                                    Text('+ 4 pays'),
+                                  ],
+                                ),
+                                SizedBox(height: 16),
+                                Center(
+                                  child: Text(
+                                    'On est fait pour être ensemble',
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 14 : 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
                                     ),
-                                  );
-                                },
-                              ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                SizedBox(height: 16),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
+                          SizedBox(height: isSmallScreen ? 26 : 34),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -527,18 +568,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               right: 0,
               bottom: 0,
               child: Container(
-                padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12.0 : 16.0,
+                  vertical: isSmallScreen ? 8.0 : 10.0,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.grey[100],
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(50.0),
-                    topRight: Radius.circular(50.0),
+                    topLeft: Radius.circular(32.0),
+                    topRight: Radius.circular(32.0),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: Offset(0, -3),
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 18,
+                      spreadRadius: 1,
+                      offset: Offset(0, -4),
                     ),
                   ],
                 ),
@@ -566,7 +611,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           child: Text(
                             _services[_currentServiceIndex].title,
                             style: TextStyle(
-                              fontSize: isSmallScreen ? 22.0 : 28.0,
+                              fontSize: isSmallScreen ? 20.0 : 24.0,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
@@ -575,15 +620,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         ),
                       ],
                     ),
-                    SizedBox(height: isSmallScreen ? 12.0 : 16.0),
+                    SizedBox(height: isSmallScreen ? 8.0 : 12.0),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12.0 : 16.0),
                       child: Text(
                         _services[_currentServiceIndex].description,
                         style: TextStyle(
-                          fontSize: isSmallScreen ? 14.0 : 16.0,
-                          color: Colors.grey[600],
-                          height: 1.4,
+                          fontSize: isSmallScreen ? 13.0 : 15.0,
+                          color: Colors.grey[700],
+                          height: 1.35,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -611,14 +656,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         ),
                         Container(
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.primaryBlue, width: 2),
+                            border: Border.all(color: AppTheme.primaryBlue, width: 1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: IconButton(
                             icon: Icon(
                               Icons.arrow_forward, 
                               color: AppTheme.primaryBlue,
-                              size: isSmallScreen ? 20 : 24,
+                              size: isSmallScreen ? 18 : 22,
                             ),
                             onPressed: () {
                               Navigator.pushNamed(context, '/login');
@@ -631,6 +676,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 ),
               ),
             ),
+            
           ],
         ),
       ),

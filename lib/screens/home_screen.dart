@@ -242,11 +242,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        child: Text(localizations.bookNow),
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            child: Text(localizations.bookNow),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                          ),
                         ),
                       ),
                     ],
