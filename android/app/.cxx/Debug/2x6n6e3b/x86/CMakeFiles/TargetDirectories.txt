@@ -1,2 +1,0 @@
-/home/dev/Téléchargements/Troov/android/app/.cxx/Debug/2x6n6e3b/x86/CMakeFiles/rebuild_cache.dir
-/home/dev/Téléchargements/Troov/android/app/.cxx/Debug/2x6n6e3b/x86/CMakeFiles/edit_cache.dir

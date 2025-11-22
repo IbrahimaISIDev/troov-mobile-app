@@ -1,5 +1,3 @@
-import 'package:troov_app/models/enums.dart';
-
 class User {
   final String id;
   final String email;
@@ -60,6 +58,21 @@ class User {
       'languages': languages,
     };
   }
+}
+
+enum UserRole { client, provider }
+
+enum ServiceCategory {
+  cleaning,
+  repair,
+  delivery,
+  cooking,
+  health,
+  beauty,
+  education,
+  transport,
+  gardening,
+  technology
 }
 
 class UserLocation {

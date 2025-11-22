@@ -8,7 +8,6 @@ import 'screens/auth/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'utils/theme.dart';
 import 'utils/localization.dart';
-import 'services/auth_service.dart';
 
 void main() {
   runApp(MyApp());

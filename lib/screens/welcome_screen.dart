@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/localization.dart';
 import '../utils/theme.dart';
 import 'dart:async';
 
@@ -166,13 +165,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     super.dispose();
   }
 
-  Widget _buildImageGrid(List<String> images) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight * 0.90; // vignettes ~10% plus petites
-        return SizedBox(
-          height: availableHeight,
-          child: Column(
+  Widget _buildImageGrid(List<String> images, double availableHeight) {
+    return Container(
+      height: availableHeight,
+      child: Column(
         children: [
           Expanded(
             child: Row(
@@ -180,16 +176,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 2,
                   child: Container(
-                    margin: EdgeInsets.only(right: 3),
+                    margin: EdgeInsets.only(right: 4),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14), // Légèrement réduit
+                      borderRadius: BorderRadius.circular(12),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 8, // Légèrement réduit
-                              offset: Offset(0, 5), // Réduit
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
                             ),
                           ],
                         ),
@@ -217,7 +213,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 22, // Légèrement réduit
+                                  size: 20,
                                 ),
                               ),
                             );
@@ -230,16 +226,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 4,
                   child: Container(
-                    margin: EdgeInsets.only(left: 3),
+                    margin: EdgeInsets.only(left: 4),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
+                              color: Colors.black.withOpacity(0.1),
                               blurRadius: 8,
-                              offset: Offset(0, 5),
+                              offset: Offset(0, 4),
                             ),
                           ],
                         ),
@@ -267,7 +263,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 22,
+                                  size: 20,
                                 ),
                               ),
                             );
@@ -280,23 +276,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ],
             ),
           ),
-          SizedBox(height: 4), // Légèrement réduit
+          SizedBox(height: 4),
           Expanded(
             child: Row(
               children: [
                 Expanded(
                   flex: 4,
                   child: Container(
-                    margin: EdgeInsets.only(right: 3),
+                    margin: EdgeInsets.only(right: 4),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
                               blurRadius: 8,
-                              offset: Offset(0, 5),
+                              offset: Offset(0, 4),
                             ),
                           ],
                         ),
@@ -324,7 +320,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 22,
+                                  size: 20,
                                 ),
                               ),
                             );
@@ -337,16 +333,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 2,
                   child: Container(
-                    margin: EdgeInsets.only(left: 3),
+                    margin: EdgeInsets.only(left: 4),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       child: Container(
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
                               blurRadius: 8,
-                              offset: Offset(0, 5),
+                              offset: Offset(0, 4),
                             ),
                           ],
                         ),
@@ -374,7 +370,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 child: Icon(
                                   Icons.image_not_supported,
                                   color: Colors.grey[400],
-                                  size: 22,
+                                  size: 20,
                                 ),
                               ),
                             );
@@ -390,111 +386,171 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ],
       ),
     );
-      },
-    );
   }
 
-  Widget _buildServicePage(ServiceData service) {
+  Widget _buildServicePage(ServiceData service, double imageHeight) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.0),
-      child: _buildImageGrid(service.images),
+      child: Column(
+        children: [
+          SizedBox(height: 8.0),
+          _buildImageGrid(service.images, imageHeight),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenHeight < 700;
+    final isVerySmallScreen = screenHeight < 600;
+    
+    // Calculs dynamiques pour la responsivité
+    final headerHeight = isVerySmallScreen ? 110.0 : (isSmallScreen ? 130.0 : 150.0);
+    final bottomPanelHeight = isVerySmallScreen ? 140.0 : (isSmallScreen ? 200.0 : 240.0);
+    final statsHeight = isVerySmallScreen ? 70.0 : (isSmallScreen ? 80.0 : 90.0);
+    final onEstFaitHeight = isVerySmallScreen ? 45.0 : 55.0;
+    
+    final availableHeight = screenHeight - headerHeight - bottomPanelHeight - statsHeight - onEstFaitHeight - 60; // 60 pour les marges
+    final imageHeight = availableHeight * 1;
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.primaryBlue.withOpacity(0.05),
       body: SafeArea(
         child: Stack(
           children: [
-            Column(
-              children: [
-                SlideTransition(
-                  position: _logoSlideAnimation,
-                  child: Container(
-                    padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Row(
+            SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: screenHeight),
+                child: Column(
+                  children: [
+                    // Header Section
+                    SlideTransition(
+                      position: _logoSlideAnimation,
+                      child: Container(
+                        height: headerHeight,
+                        padding: EdgeInsets.all(isVerySmallScreen ? 8.0 : (isSmallScreen ? 10.0 : 12.0)),
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppTheme.primaryBlue.withOpacity(0.06),
-                                    blurRadius: 6,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/images/logo_troov-mini.jpeg',
-                                  width: isSmallScreen ? 40 : 50,
-                                  height: isSmallScreen ? 40 : 50,
-                                  fit: BoxFit.cover,
+                            // Logo et nom Troov
+                            Center(
+                              child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                'assets/images/logo_troov-mini.jpeg',
+                                width: isVerySmallScreen ? 35 : (isSmallScreen ? 40 : 50),
+                                height: isVerySmallScreen ? 35 : (isSmallScreen ? 40 : 50),
+                                fit: BoxFit.contain,
                                 ),
+                                SizedBox(width: 8),
+                                Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                    Text(
+                                      'Troov.',
+                                      style: TextStyle(
+                                      fontSize: isVerySmallScreen ? 18 : (isSmallScreen ? 20 : 24),
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primaryBlue,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                      'tout ce que tu cherches',
+                                      style: TextStyle(
+                                        fontSize: isVerySmallScreen ? 11.0 : (isSmallScreen ? 13.0 : 16.0),
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[600],
+                                      ),
+                                      ),
+                                    ),
+                                    ],
+                                  ),
+                                  Text(
+                                    'là où tes recherches s\'arrêtent.',
+                                    style: TextStyle(
+                                    fontSize: isVerySmallScreen ? 11.0 : (isSmallScreen ? 13.0 : 16.0),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[600],
+                                    height: 1.2,
+                                    ),
+                                  ),
+                                  ],
+                                ),
+                                ),
+                              ],
                               ),
                             ),
-                            SizedBox(width: 12),
-                            Text(
-                              'Troov',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 20 : 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryBlue,
-                              ),
+                            SizedBox(height: isVerySmallScreen ? 10.0 : (isSmallScreen ? 20.0 : 40.0)),
+                            // Les trois textes
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'ton artisan',
+                                    style: TextStyle(
+                                      fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 14.0),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'tr00v',
+                                    style: TextStyle(
+                                      fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 14.0),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'un bon plan',
+                                    style: TextStyle(
+                                      fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 14.0),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        SizedBox(height: isSmallScreen ? 8.0 : 12.0),
-                        Text(
-                          'Bienvenue sur Troov',
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 24 : 30,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlue,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 8.0),
-                        Text(
-                          'Votre allié pour dénicher des services fiables près de chez vous.',
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 14.0 : 16.0,
-                            color: Colors.grey[700],
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                SizedBox(height: 16.0), // Espacement avec les images
-                AnimatedBuilder(
-                  animation: _contentAnimationController,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: _contentFadeAnimation.value,
-                      child: Column(
-                        children: [
-                          // Carrousel d'images juste sous le texte
-                          AnimatedBuilder(
-                            animation: _gridAnimationController,
-                            builder: (context, child) {
-                              return Opacity(
-                                opacity: _gridFadeAnimation.value,
-                                child: SizedBox(
-                                  height: MediaQuery.of(context).size.height * 0.26,
+                    
+                    // Images carousel
+                    SizedBox(height: isVerySmallScreen ? 1.0 : (isSmallScreen ? 1.0 : 20.0)),
+                    AnimatedBuilder(
+                      animation: _contentAnimationController,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: _contentFadeAnimation.value,
+                          child: Container(
+                            height: imageHeight,
+                            child: AnimatedBuilder(
+                              animation: _gridAnimationController,
+                              builder: (context, child) {
+                                return Opacity(
+                                  opacity: _gridFadeAnimation.value,
                                   child: PageView.builder(
                                     controller: _pageController,
                                     itemCount: _services.length,
@@ -504,180 +560,255 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                       });
                                     },
                                     itemBuilder: (context, index) {
-                                      return _buildServicePage(_services[index]);
+                                      return _buildServicePage(_services[index], imageHeight - 16);
                                     },
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                          SizedBox(height: isSmallScreen ? 18 : 26),
-                          // Paragraphe sous les images
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        );
+                      },
+                    ),
+                    
+                    SizedBox(height: isVerySmallScreen ? 1.0 : (isSmallScreen ? 10.0 : 20.0)),
+                    
+                    // Section "Encore plus de raisons" - fixe
+                    Container(
+                      height: statsHeight,
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Encore plus de raisons de nous reTROOVer',
+                              style: TextStyle(
+                                fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 15.0),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          // Statistiques en grille 3x2
+                          Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Encore plus de raisons de nous reTROOVer',
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 14 : 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
+                                // Première ligne
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(child: _buildStatItem('+ 350 artisans', isVerySmallScreen, isSmallScreen)),
+                                      Expanded(child: _buildStatItem('+ 8500 membres', isVerySmallScreen, isSmallScreen)),
+                                      Expanded(child: _buildStatItem('+ 769 produits', isVerySmallScreen, isSmallScreen)),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 6,  
-                                  children: const [
-                                    Text('+ 350 artisans'),
-                                    Text('+ 8500 membres'),
-                                    Text('769 produits en ligne'),
-                                    Text('+33 partenaires'),
-                                    Text('+ de 400 collaborateurs'),
-                                    Text('+ 4 pays'),
-                                  ],
-                                ),
-                                SizedBox(height: 16),
-                                Center(
-                                  child: Text(
-                                    'On est fait pour être ensemble',
-                                    style: TextStyle(
-                                      fontSize: isSmallScreen ? 14 : 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                    textAlign: TextAlign.center,
+                                // Deuxième ligne
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(child: _buildStatItem('+33 partenaires', isVerySmallScreen, isSmallScreen)),
+                                      Expanded(child: _buildStatItem('+ 400 collaborateurs', isVerySmallScreen, isSmallScreen)),
+                                      Expanded(child: _buildStatItem('+ 4 pays', isVerySmallScreen, isSmallScreen)),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(height: 16),
                               ],
                             ),
                           ),
-                          SizedBox(height: isSmallScreen ? 26 : 34),
                         ],
                       ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 12.0 : 16.0,
-                  vertical: isSmallScreen ? 8.0 : 10.0,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(32.0),
-                    topRight: Radius.circular(32.0),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.18),
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                      offset: Offset(0, -4),
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            _services[_currentServiceIndex].icon,
-                            color: AppTheme.primaryBlue,
-                            size: isSmallScreen ? 24 : 28,
-                          ),
-                        ),
-                        SizedBox(width: isSmallScreen ? 16.0 : 24.0),
-                        Expanded(
-                          child: Text(
-                            _services[_currentServiceIndex].title,
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 20.0 : 24.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                            textAlign: TextAlign.start,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isSmallScreen ? 8.0 : 12.0),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12.0 : 16.0),
-                      child: Text(
-                        _services[_currentServiceIndex].description,
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 13.0 : 15.0,
-                          color: Colors.grey[700],
-                          height: 1.35,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    SizedBox(height: isSmallScreen ? 12.0 : 16.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: List.generate(
-                            _services.length,
-                            (index) => AnimatedContainer(
-                              duration: Duration(milliseconds: 300),
-                              margin: EdgeInsets.symmetric(horizontal: 3),
-                              width: _currentServiceIndex == index ? 20 : 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: _currentServiceIndex == index
-                                    ? AppTheme.primaryBlue
-                                    : AppTheme.primaryBlue.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.primaryBlue, width: 1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.arrow_forward, 
-                              color: AppTheme.primaryBlue,
-                              size: isSmallScreen ? 18 : 22,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/login');
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                    
+                    SizedBox(height: bottomPanelHeight + onEstFaitHeight),
                   ],
                 ),
               ),
             ),
             
+            // Bottom panels
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Section "On est fait pour être ensemble" avec border-top
+                  Container(
+                    height: onEstFaitHeight,
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      vertical: isVerySmallScreen ? 8.0 : 12.0,
+                      horizontal: 20.0,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.grey.withOpacity(0.8),
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'On est fait pour être ensemble',
+                        style: TextStyle(
+                          fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 15.0),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  // Panneau noir principal
+                  Container(
+                    constraints: BoxConstraints(
+                      minHeight: bottomPanelHeight,
+                      maxHeight: bottomPanelHeight,
+                    ),
+                    padding: EdgeInsets.all(isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 16.0)),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15.0),
+                        topRight: Radius.circular(15.0),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: Offset(0, -3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Header du service
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(isVerySmallScreen ? 6 : (isSmallScreen ? 8 : 12)),
+                              child: Icon(
+                                _services[_currentServiceIndex].icon,
+                                color: AppTheme.primaryBlue,
+                                size: isVerySmallScreen ? 20 : (isSmallScreen ? 24 : 28),
+                              ),
+                            ),
+                            SizedBox(width: isVerySmallScreen ? 12.0 : 16.0),
+                            Expanded(
+                              child: Text(
+                                _services[_currentServiceIndex].title,
+                                style: TextStyle(
+                                  fontSize: isVerySmallScreen ? 14.0 : (isSmallScreen ? 28.0 : 24.0),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        // Description
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Center(
+                              child: Text(
+                                _services[_currentServiceIndex].description,
+                                style: TextStyle(
+                                  fontSize: isVerySmallScreen ? 12.0 : (isSmallScreen ? 14.0 : 16.0),
+                                  color: Colors.grey[300],
+                                  height: 1.3,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        // Navigation
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: List.generate(
+                                _services.length,
+                                (index) => AnimatedContainer(
+                                  duration: Duration(milliseconds: 300),
+                                  margin: EdgeInsets.symmetric(horizontal: 2),
+                                  width: _currentServiceIndex == index ? 16 : 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: _currentServiceIndex == index
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white, width: 2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.arrow_forward, 
+                                  color: Colors.white,
+                                  size: isVerySmallScreen ? 18 : (isSmallScreen ? 20 : 24),
+                                ),
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/home');
+                                },
+                                constraints: BoxConstraints(
+                                  minWidth: isVerySmallScreen ? 35 : 40,
+                                  minHeight: isVerySmallScreen ? 35 : 40,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String text, bool isVerySmallScreen, bool isSmallScreen) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 2.0,
+        vertical: 2.0,
+      ),
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: isVerySmallScreen ? 8.0 : (isSmallScreen ? 9.0 : 11.0),
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );

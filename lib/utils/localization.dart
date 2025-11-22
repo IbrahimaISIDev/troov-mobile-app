@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class AppLocalizations {
   static AppLocalizations? of(BuildContext context) {
@@ -132,6 +131,20 @@ class AppLocalizations {
   String get loading => translate('loading');
   String get error => translate('error');
   String get retry => translate('retry');
+
+  get general => null;
+
+  String? get emailNotifications => null;
+
+  String? get pushNotifications => null;
+
+  get notifications => null;
+
+  String? get privacySettings => null;
+
+  String? get changePassword => null;
+
+  get account => null;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
