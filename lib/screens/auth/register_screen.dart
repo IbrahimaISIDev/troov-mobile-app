@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
+import 'email_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -100,7 +101,12 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
       );
 
       if (user != null && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EmailVerificationScreen(),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

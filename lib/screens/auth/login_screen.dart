@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
 import '../../services/auth_service.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -73,11 +74,20 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     });
 
     try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // Mock user login for demo
+      if (email == 'votre@gmail.com' && password == 'passer123') {
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+        return;
+      }
+
+      // Fallback to real AuthService logic
       final authService = AuthService();
-      final user = await authService.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      final user = await authService.login(email, password);
 
       if (user != null && mounted) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -404,7 +414,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: () {
-          // TODO: Implémenter la récupération de mot de passe
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ForgotPasswordScreen(),
+            ),
+          );
         },
         style: TextButton.styleFrom(
           foregroundColor: AppTheme.primaryBlue,

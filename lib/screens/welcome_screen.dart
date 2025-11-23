@@ -886,7 +886,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                     ),
                                     onPressed: () {
                                       Navigator.pushNamed(
-                                          context, '/home');
+                                          context, '/login');
                                     },
                                     constraints: BoxConstraints(
                                       minWidth: isVerySmallScreen ? 35 : 40,
