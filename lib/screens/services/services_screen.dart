@@ -6,6 +6,7 @@ import './popular_services.dart';
 import './service_provider_list.dart';
 import './service_provider_detail.dart';
 import '../../models/service_model.dart';
+import '../chat/chat_screen.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -33,6 +34,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
           duration: const Duration(milliseconds: 300),
           child: _buildCurrentView(),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppTheme.primaryBlue,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ChatScreen(showBack: true),
+            ),
+          );
+        },
+        child: const Icon(Icons.chat_rounded, color: Colors.white),
       ),
     );
   }

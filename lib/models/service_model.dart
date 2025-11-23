@@ -86,60 +86,12 @@ class ServiceData {
         providerCount: 150,
       ),
       ServiceCategory(
-        id: 'sante',
-        name: 'Santé',
-        icon: Icons.medical_services_rounded,
-        color: Colors.red,
-        description: 'Professionnels de santé et services médicaux',
-        providerCount: 89,
-      ),
-      ServiceCategory(
-        id: 'education',
-        name: 'Éducation',
-        icon: Icons.school_rounded,
-        color: Colors.green,
-        description: 'Formation, cours et coaching',
-        providerCount: 200,
-      ),
-      ServiceCategory(
-        id: 'reparation',
-        name: 'Réparation',
-        icon: Icons.build_rounded,
-        color: Colors.orange,
-        description: 'Maintenance et réparation tous domaines',
-        providerCount: 175,
-      ),
-      ServiceCategory(
-        id: 'transport',
-        name: 'Transport',
-        icon: Icons.local_shipping_rounded,
-        color: Colors.purple,
-        description: 'Transport et livraison',
-        providerCount: 280,
-      ),
-      ServiceCategory(
         id: 'beaute',
         name: 'Beauté',
         icon: Icons.content_cut_rounded,
         color: Colors.pink,
-        description: 'Coiffure, esthétique et bien-être',
+        description: 'Coiffure femmes, esthétique et bien-être',
         providerCount: 95,
-      ),
-      ServiceCategory(
-        id: 'evenements',
-        name: 'Événements',
-        icon: Icons.event_rounded,
-        color: Colors.teal,
-        description: 'Organisation d\'événements et fêtes',
-        providerCount: 45,
-      ),
-      ServiceCategory(
-        id: 'technologie',
-        name: 'Technologie',
-        icon: Icons.computer_rounded,
-        color: Colors.indigo,
-        description: 'Services informatiques et digitaux',
-        providerCount: 67,
       ),
     ];
   }
@@ -148,39 +100,28 @@ class ServiceData {
     final categories = getCategories();
     final categoriesMap = {for (var c in categories) c.id: c};
 
+    final immobilier = categoriesMap['immobilier'];
+    final beaute = categoriesMap['beaute'];
+
     return [
-      PopularService(
-        id: 'reparation-electronique',
-        name: 'Réparation',
-        icon: Icons.build_rounded,
-        color: Colors.orange,
-        subtitle: '150+ techniciens',
-        category: categoriesMap['reparation']!,
-      ),
-      PopularService(
-        id: 'transport-livraison',
-        name: 'Livraison',
-        icon: Icons.local_shipping_rounded,
-        color: Colors.green,
-        subtitle: '200+ livreurs',
-        category: categoriesMap['transport']!,
-      ),
-      PopularService(
-        id: 'sante-consultation',
-        name: 'Consultation',
-        icon: Icons.medical_services_rounded,
-        color: Colors.red,
-        subtitle: '80+ médecins',
-        category: categoriesMap['sante']!,
-      ),
-      PopularService(
-        id: 'education-cours',
-        name: 'Cours privés',
-        icon: Icons.school_rounded,
-        color: Colors.blue,
-        subtitle: '120+ profs',
-        category: categoriesMap['education']!,
-      ),
+      if (immobilier != null)
+        PopularService(
+          id: 'immobilier-location',
+          name: 'Immobilier',
+          icon: Icons.home_rounded,
+          color: Colors.blue,
+          subtitle: 'Location & colocation',
+          category: immobilier,
+        ),
+      if (beaute != null)
+        PopularService(
+          id: 'beaute-coiffure-femmes',
+          name: 'Coiffure femmes',
+          icon: Icons.content_cut_rounded,
+          color: Colors.pink,
+          subtitle: 'Salons & coiffeuses',
+          category: beaute,
+        ),
     ];
   }
 }

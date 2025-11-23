@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
+import '../history/history_screen.dart';
+import '../history/history_detail_screen.dart';
 
 class TransferScreen extends StatefulWidget {
   const TransferScreen({Key? key}) : super(key: key);
@@ -45,7 +47,7 @@ class _TransferScreenState extends State<TransferScreen> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(height: 20),
+            SizedBox(height: 32),
             
             // Header avec titre
             Container(
@@ -73,23 +75,33 @@ class _TransferScreenState extends State<TransferScreen> {
                       ),
                     ],
                   ),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 5,
-                          offset: Offset(0, 2),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HistoryScreen(),
                         ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.history,
-                      color: AppTheme.primaryBlue,
-                      size: 24,
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 5,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.history,
+                        color: AppTheme.primaryBlue,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ],
@@ -344,7 +356,14 @@ class _TransferScreenState extends State<TransferScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HistoryScreen(),
+                            ),
+                          );
+                        },
                         child: Text(
                           'Voir tout',
                           style: TextStyle(
@@ -356,7 +375,9 @@ class _TransferScreenState extends State<TransferScreen> {
                     ],
                   ),
                   SizedBox(height: 15),
-                  ...(_recentTransfers.map((transfer) => _buildTransferItem(transfer)).toList()),
+                  ..._recentTransfers.asMap().entries
+                      .map((entry) => _buildTransferItem(entry.value, entry.key))
+                      .toList(),
                 ],
               ),
             ),
@@ -465,48 +486,100 @@ class _TransferScreenState extends State<TransferScreen> {
     );
   }
 
-  Widget _buildTransferItem(Map<String, dynamic> transfer) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 10),
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.1),
-              shape: BoxShape.circle,
+  Widget _buildTransferItem(Map<String, dynamic> transfer, int index) {
+    final service = transfer['service'] as String;
+    final receiverName = transfer['name'] as String;
+    final receiverPhone = transfer['phone'] as String;
+    final amountRaw = transfer['amount'] as String;
+    final date = transfer['date'] as String;
+    final reference = 'TRX-${index + 1}2345';
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HistoryDetailScreen(
+              service: service,
+              receiverName: receiverName,
+              receiverPhone: receiverPhone,
+              amount: '$amountRaw FCFA',
+              date: date,
+              reference: reference,
             ),
-            child: Center(
-              child: Text(
-                transfer['name'][0],
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryBlue,
+          ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  transfer['name'][0],
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryBlue,
+                  ),
                 ),
               ),
             ),
-          ),
-          SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transfer['name'],
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    transfer['phone'],
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  Text(
+                    transfer['service'],
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.primaryBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  transfer['name'],
+                  '${transfer['amount']} FCFA',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -514,44 +587,16 @@ class _TransferScreenState extends State<TransferScreen> {
                   ),
                 ),
                 Text(
-                  transfer['phone'],
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                Text(
-                  transfer['service'],
+                  transfer['date'],
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.primaryBlue,
-                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade600,
                   ),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${transfer['amount']} FCFA',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              Text(
-                transfer['date'],
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        )
       ),
     );
   }

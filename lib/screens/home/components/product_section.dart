@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class ProductSection extends StatelessWidget {
   final String title;
   final List<String> images;
-  final List<Color> colors;
   final Function(int) onProductTap;
   final VoidCallback onSeeMoreTap;
 
@@ -11,7 +10,6 @@ class ProductSection extends StatelessWidget {
     Key? key,
     required this.title,
     required this.images,
-    required this.colors,
     required this.onProductTap,
     required this.onSeeMoreTap,
   }) : super(key: key);
@@ -77,7 +75,6 @@ class ProductSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 return _buildSimpleProductCard(
                   images[index],
-                  colors[index % colors.length],
                   screenWidth,
                   index,
                 );
@@ -90,12 +87,13 @@ class ProductSection extends StatelessWidget {
     );
   }
 
-  Widget _buildSimpleProductCard(String imagePath, Color fallbackColor, double screenWidth, int index) {
+  Widget _buildSimpleProductCard(String imagePath, double screenWidth, int index) {
     return GestureDetector(
       onTap: () => onProductTap(index),
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
-        width: screenWidth < 600 ? 110 : 120,
+        width: screenWidth < 600 ? 140 : 120,
+        height: screenWidth < 600 ? 140 : 120,
         margin: EdgeInsets.only(
           right: screenWidth * 0.04,
           left: screenWidth * 0.0125,
@@ -123,7 +121,7 @@ class ProductSection extends StatelessWidget {
               errorBuilder: (context, error, stackTrace) {
                 print("Erreur de chargement de l'image produit: $error");
                 return Container(
-                  color: fallbackColor,
+                  color: Colors.grey.shade300,
                   child: Center(
                     child: Icon(
                       Icons.image_not_supported,

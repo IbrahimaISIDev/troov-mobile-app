@@ -284,7 +284,7 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
                     backgroundColor: Colors.grey.shade200,
                     child: ClipOval(
                       child: Image.asset(
-                        provider.profileImage ?? 'assets/images/default_profile.jpg',
+                        provider.profileImage ?? 'assets/images/burger.png',
                         fit: BoxFit.cover,
                         width: screenWidth < 600 ? 50 : 60,
                         height: screenWidth < 600 ? 50 : 60,

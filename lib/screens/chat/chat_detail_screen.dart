@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
-import 'call_screen.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String contactName;
@@ -120,6 +119,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     return AppBar(
       backgroundColor: AppTheme.primaryBlue,
       foregroundColor: Colors.white,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded),
+        onPressed: () => Navigator.pop(context),
+      ),
       title: Row(
         children: [
           CircleAvatar(
@@ -158,14 +161,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: () => _startCall(false),
-          icon: const Icon(Icons.call),
-        ),
-        IconButton(
-          onPressed: () => _startCall(true),
-          icon: const Icon(Icons.videocam),
-        ),
         PopupMenuButton(
           itemBuilder: (context) => [
             const PopupMenuItem(
@@ -528,20 +523,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _startCall(bool isVideo) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CallScreen(
-          contactName: widget.contactName,
-          contactId: widget.contactId,
-          isVideo: isVideo,
-          isIncoming: false,
-        ),
       ),
     );
   }

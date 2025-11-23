@@ -5,6 +5,8 @@ import 'transfert/transfer_screen.dart';
 import 'services/services_screen.dart';
 import 'chat/chat_screen.dart';
 import 'settings/settings_screen.dart';
+import 'welcome_screen.dart';
+import 'troov/troov_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -45,10 +47,38 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         children: [
-          HomeTabScreen(),
+          HomeTabScreen(
+            onThemeToggle: widget.onThemeToggle,
+            onLogout: () {
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(
+                  content: Text('À bientôt'),
+                  duration: Duration(milliseconds: 800),
+                ),
+              );
+              Future.delayed(const Duration(milliseconds: 800), () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => WelcomeScreen()),
+                  (route) => false,
+                );
+              });
+            },
+            onProfile: () {
+              setState(() {
+                _currentIndex = 4;
+              });
+              _pageController.animateToPage(
+                4,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            },
+            isDarkMode: widget.isDarkMode,
+          ),
           TransferScreen(),
+          TroovScreen(),
           ServicesScreen(),
-          ChatScreen(),
           SettingsScreen(
             onThemeToggle: widget.onThemeToggle,
             onLanguageChange: widget.onLanguageChange,
@@ -143,13 +173,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       'assets/images/logo_troov-mini.jpeg',
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.business_center_rounded);
+                        return Icon(Icons.play_circle_fill_rounded);
                       },
                     ),
                   ),
                 ),
               ),
-              label: 'Services',
+              label: 'Troov',
             ),
             BottomNavigationBarItem(
               icon: Container(
@@ -158,9 +188,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: _currentIndex == 3 ? (AppTheme.primaryBlue).withOpacity(0.1) : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.chat_bubble_rounded),
+                child: Icon(Icons.design_services_rounded),
               ),
-              label: 'Chat',
+              label: 'Services',
             ),
             BottomNavigationBarItem(
               icon: Container(

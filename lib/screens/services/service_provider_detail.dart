@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 import '../../utils/theme.dart';
+import '../chat/chat_detail_screen.dart';
 
 class ServiceProviderDetail extends StatefulWidget {
   final ServiceProvider provider;
@@ -119,7 +120,7 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
                       backgroundColor: Colors.grey.shade200,
                       child: ClipOval(
                         child: Image.asset(
-                          widget.provider.profileImage ?? 'assets/images/default_profile.jpg',
+                          widget.provider.profileImage ?? 'assets/images/burger.png',
                           fit: BoxFit.cover,
                           width: screenWidth < 600 ? 72 : 92,
                           height: screenWidth < 600 ? 72 : 92,
@@ -499,7 +500,16 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
           Expanded(
             child: ElevatedButton(
               onPressed: () {
-                print('Contacter: ${widget.provider.phone}');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatDetailScreen(
+                      contactName: widget.provider.name,
+                      contactId: widget.provider.id,
+                      isOnline: widget.provider.availability,
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryBlue,
@@ -522,7 +532,7 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
           Expanded(
             child: OutlinedButton(
               onPressed: () {
-                print('Réserver: ${widget.provider.name}');
+                _showBookingForm();
               },
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppTheme.primaryBlue),
@@ -547,76 +557,172 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
   }
 
   Widget _buildStatItem(IconData icon, String value, String label, Color color, double screenWidth) {
-    final fontSize = screenWidth < 600 ? 12 : 14;
-    final smallFontSize = screenWidth < 600 ? 10 : 12;
+    final double fontSize = screenWidth < 600 ? 12.0 : 14.0;
+    final double smallFontSize = screenWidth < 600 ? 10.0 : 12.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: smallFontSize + 2,
-              color: color,
-            ),
-            SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: fontSize - 0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+        Container(
+          padding: EdgeInsets.all(screenWidth * 0.03),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: screenWidth < 600 ? 18 : 20,
+          ),
         ),
-        Flexible(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: smallFontSize - 0,
-              color: Colors.grey.shade600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        SizedBox(height: screenWidth * 0.015),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        SizedBox(height: screenWidth * 0.005),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: smallFontSize,
+            color: Colors.grey.shade600,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text, {Color? color, required double screenWidth}) {
-    final fontSize = screenWidth < 600 ? 12 : 14;
+  void _showBookingForm() {
+    final nameController = TextEditingController(text: widget.provider.name);
+    final dateController = TextEditingController();
+    final messageController = TextEditingController();
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: screenWidth * 0.01),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: fontSize + 2,
-            color: color ?? Colors.grey.shade600,
-          ),
-          SizedBox(width: screenWidth * 0.02),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: fontSize + 0,
-                color: Colors.grey.shade600,
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final mediaQuery = MediaQuery.of(context);
+        final bottomInset = mediaQuery.viewInsets.bottom;
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Demande de réservation',
+                    style: TextStyle(
+                      fontSize: mediaQuery.size.width < 600 ? 18 : 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Prestataire',
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: dateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Date et heure souhaitées',
+                      hintText: 'Ex: 25/12/2025 à 15h',
+                      prefixIcon: Icon(Icons.calendar_today),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: messageController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Détails de la demande',
+                      hintText: 'Décrivez votre besoin, l’adresse, etc.',
+                      prefixIcon: Icon(Icons.description),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Demande de réservation envoyée'),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Envoyer la demande'),
+                    ),
+                  ),
+                ],
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+}
+
+Widget _buildInfoRow(IconData icon, String text, {Color? color, required double screenWidth}) {
+  final double fontSize = screenWidth < 600 ? 12.0 : 14.0;
+
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: screenWidth * 0.01),
+    child: Row(
+      children: [
+        Icon(
+          icon,
+          size: fontSize + 2,
+          color: color ?? Colors.grey.shade600,
+        ),
+        SizedBox(width: screenWidth * 0.02),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: fontSize,
+              color: Colors.grey.shade600,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  );
 }

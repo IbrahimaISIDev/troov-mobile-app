@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/theme.dart';
+import '../notifications/notifications_screen.dart';
 
 class ServiceHeader extends StatefulWidget {
   final String searchQuery;
@@ -116,19 +117,75 @@ class _ServiceHeaderState extends State<ServiceHeader>
             ),
           ],
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: AppTheme.primaryBlue.withOpacity(0.1),
+        PopupMenuButton<String>(
+          elevation: 8,
+          offset: const Offset(0, 40),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          child: IconButton(
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: AppTheme.primaryBlue,
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: 'notif1',
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.notifications_active_rounded, size: 20),
+                title: Text('Nouveau message'),
+                subtitle: Text('Tu as reçu un nouveau message.'),
+              ),
             ),
-            onPressed: () {
-              // Gérer les notifications
-            },
+            PopupMenuItem(
+              value: 'notif2',
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.discount_rounded, size: 20),
+                title: Text('Promo sur tes services'),
+                subtitle: Text('Profite de nouvelles offres personnalisées.'),
+              ),
+            ),
+            PopupMenuItem(
+              value: 'notif3',
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.home_repair_service_rounded, size: 20),
+                title: Text('Nouvel artisan disponible'),
+                subtitle: Text('Un nouvel artisan correspond à ta recherche.'),
+              ),
+            ),
+            PopupMenuItem(
+              value: 'see_more',
+              child: Center(
+                child: Text(
+                  'Voir plus',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+          onSelected: (value) {
+            if (value == 'see_more') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            }
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: AppTheme.primaryBlue,
+              ),
+              onPressed: null,
+            ),
           ),
         ),
       ],

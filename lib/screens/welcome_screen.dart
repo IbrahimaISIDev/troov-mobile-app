@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
 import 'dart:async';
+import 'dart:math' as math;
 
 class WelcomeScreen extends StatefulWidget {
   @override
@@ -40,7 +41,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       images: [
         'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1527515637462-cff94eecc1b2?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&h=300&fit=crop',
       ],
     ),
@@ -60,8 +61,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       title: 'Restauration',
       description: 'Chefs à domicile et traiteurs pour des moments culinaires exceptionnels',
       images: [
-        'https://images.unsplash.com/photo-1556909114-f6e7add3136?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop',
       ],
@@ -74,7 +75,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&h=300&fit=crop',
         'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1506629905607-48bccf9b0f74?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop',
       ],
     ),
   ];
@@ -165,7 +166,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     super.dispose();
   }
 
-  Widget _buildImageGrid(List<String> images, double availableHeight) {
+    Widget _buildImageGrid(List<String> images, double availableHeight) {
     return Container(
       height: availableHeight,
       child: Column(
@@ -176,16 +177,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 2,
                   child: Container(
-                    margin: EdgeInsets.only(right: 4),
+                    margin: EdgeInsets.only(right: 6),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                       child: Container(
                         decoration: BoxDecoration(
+                          color: Colors.white,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 16,
+                              offset: Offset(0, 6),
                             ),
                           ],
                         ),
@@ -194,7 +196,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
+                          loadingBuilder:
+                              (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
                               color: Colors.grey[100],
@@ -226,16 +229,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 4,
                   child: Container(
-                    margin: EdgeInsets.only(left: 4),
+                    margin: EdgeInsets.only(left: 6),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                       child: Container(
                         decoration: BoxDecoration(
+                          color: Colors.white,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 16,
+                              offset: Offset(0, 6),
                             ),
                           ],
                         ),
@@ -244,7 +248,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
+                          loadingBuilder:
+                              (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
                               color: Colors.grey[100],
@@ -283,48 +288,59 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 4,
                   child: Container(
-                    margin: EdgeInsets.only(right: 4),
+                    margin: EdgeInsets.only(right: 6),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                       child: Container(
                         decoration: BoxDecoration(
+                          color: Colors.white,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 16,
+                              offset: Offset(0, 6),
                             ),
                           ],
                         ),
-                        child: Image.network(
-                          images[2],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: Colors.grey[100],
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primaryBlue,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[100],
-                              child: Center(
-                                child: Icon(
-                                  Icons.image_not_supported,
-                                  color: Colors.grey[400],
-                                  size: 20,
-                                ),
-                              ),
-                            );
-                          },
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              images[2],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              loadingBuilder: (context, child,
+                                  loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.grey[100],
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppTheme.primaryBlue,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder:
+                                  (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[100],
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey[400],
+                                      size: 20,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            Container(
+                              color: Colors.white.withOpacity(0.18),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -333,48 +349,59 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 Expanded(
                   flex: 2,
                   child: Container(
-                    margin: EdgeInsets.only(left: 4),
+                    margin: EdgeInsets.only(left: 6),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                       child: Container(
                         decoration: BoxDecoration(
+                          color: Colors.white,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 16,
+                              offset: Offset(0, 6),
                             ),
                           ],
                         ),
-                        child: Image.network(
-                          images[3],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: Colors.grey[100],
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primaryBlue,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[100],
-                              child: Center(
-                                child: Icon(
-                                  Icons.image_not_supported,
-                                  color: Colors.grey[400],
-                                  size: 20,
-                                ),
-                              ),
-                            );
-                          },
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              images[3],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              loadingBuilder: (context, child,
+                                  loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.grey[100],
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppTheme.primaryBlue,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder:
+                                  (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[100],
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey[400],
+                                      size: 20,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            Container(
+                              color: Colors.white.withOpacity(0.18),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -400,414 +427,547 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final isSmallScreen = screenHeight < 700;
-    final isVerySmallScreen = screenHeight < 600;
-    
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
+    final screenWidth = mediaQuery.size.width;
+
+    // Hauteur logique pour garder un ratio cohérent sur tous les écrans
+    final layoutHeight = math.min(math.max(screenHeight, 640.0), 840.0);
+
+    final isSmallScreen = layoutHeight < 700;
+    final isVerySmallScreen = layoutHeight < 600;
+
     // Calculs dynamiques pour la responsivité
-    final headerHeight = isVerySmallScreen ? 110.0 : (isSmallScreen ? 130.0 : 150.0);
-    final bottomPanelHeight = isVerySmallScreen ? 140.0 : (isSmallScreen ? 200.0 : 240.0);
-    final statsHeight = isVerySmallScreen ? 70.0 : (isSmallScreen ? 80.0 : 90.0);
+    final headerHeight =
+        isVerySmallScreen ? 110.0 : (isSmallScreen ? 130.0 : 150.0);
+    final bottomPanelHeight =
+        isVerySmallScreen ? 160.0 : (isSmallScreen ? 210.0 : 240.0);
+    final statsHeight =
+        isVerySmallScreen ? 70.0 : (isSmallScreen ? 80.0 : 90.0);
     final onEstFaitHeight = isVerySmallScreen ? 45.0 : 55.0;
-    
-    final availableHeight = screenHeight - headerHeight - bottomPanelHeight - statsHeight - onEstFaitHeight - 60; // 60 pour les marges
-    final imageHeight = availableHeight * 1;
-    
+
+    double availableHeight = layoutHeight -
+        headerHeight -
+        bottomPanelHeight -
+        statsHeight -
+        onEstFaitHeight -
+        60; // 60 pour les marges
+    if (availableHeight < 150) {
+      availableHeight = 150;
+    }
+    final imageHeight = availableHeight;
+    final h = MediaQuery.of(context).size.height;
+    final isVerySmall = h < 600;
+    final isSmall = h < 700;
+
+    // Largeur max pour ressembler au mockup iPhone et centrer sur tablette
+    final maxContentWidth = 430.0;
+
     return Scaffold(
-      backgroundColor: AppTheme.primaryBlue.withOpacity(0.05),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: screenHeight),
-                child: Column(
-                  children: [
-                    // Header Section
-                    SlideTransition(
-                      position: _logoSlideAnimation,
-                      child: Container(
-                        height: headerHeight,
-                        padding: EdgeInsets.all(isVerySmallScreen ? 8.0 : (isSmallScreen ? 10.0 : 12.0)),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Logo et nom Troov
-                            Center(
-                              child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 430.0,
+              minWidth: 320,
+            ),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: screenHeight),
+                    child: Column(
+                      children: [
+                        // Header Section
+                        SlideTransition(
+                          position: _logoSlideAnimation,
+                          child: Container(
+                            height: headerHeight,
+                            padding: EdgeInsets.all(isVerySmallScreen
+                                ? 8.0
+                                : (isSmallScreen ? 10.0 : 12.0)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                'assets/images/logo_troov-mini.jpeg',
-                                width: isVerySmallScreen ? 35 : (isSmallScreen ? 40 : 50),
-                                height: isVerySmallScreen ? 35 : (isSmallScreen ? 40 : 50),
-                                fit: BoxFit.contain,
-                                ),
-                                SizedBox(width: 8),
-                                Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                // Logo et nom Troov
+                                Center(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
-                                    Text(
-                                      'Troov.',
-                                      style: TextStyle(
-                                      fontSize: isVerySmallScreen ? 18 : (isSmallScreen ? 20 : 24),
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryBlue,
+                                      Image.asset(
+                                        'assets/images/logo_troov-mini.jpeg',
+                                        width: isVerySmallScreen
+                                            ? 35
+                                            : (isSmallScreen ? 40 : 50),
+                                        height: isVerySmallScreen
+                                            ? 35
+                                            : (isSmallScreen ? 40 : 50),
+                                        fit: BoxFit.contain,
                                       ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                      'tout ce que tu cherches',
-                                      style: TextStyle(
-                                        fontSize: isVerySmallScreen ? 11.0 : (isSmallScreen ? 13.0 : 16.0),
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey[600],
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  'Troov.',
+                                                  style: TextStyle(
+                                                    fontSize: isVerySmallScreen
+                                                        ? 18
+                                                        : (isSmallScreen
+                                                            ? 20
+                                                            : 24),
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        AppTheme.primaryBlue,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Flexible(
+                                                  child: Text(
+                                                    'tout ce que tu cherches',
+                                                    style: TextStyle(
+                                                      fontSize:
+                                                          isVerySmallScreen
+                                                              ? 11.0
+                                                              : (isSmallScreen
+                                                                  ? 13.0
+                                                                  : 16.0),
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.grey[600],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Text(
+                                              'là où tes recherches s\'arrêtent.',
+                                              style: TextStyle(
+                                                fontSize: isVerySmallScreen
+                                                    ? 11.0
+                                                    : (isSmallScreen
+                                                        ? 13.0
+                                                        : 16.0),
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.grey[600],
+                                                height: 1.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      ),
-                                    ),
                                     ],
                                   ),
-                                  Text(
-                                    'là où tes recherches s\'arrêtent.',
-                                    style: TextStyle(
-                                    fontSize: isVerySmallScreen ? 11.0 : (isSmallScreen ? 13.0 : 16.0),
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[600],
-                                    height: 1.2,
+                                ),
+                                SizedBox(
+                                  height: isVerySmallScreen
+                                      ? 10.0
+                                      : (isSmallScreen ? 20.0 : 40.0),
+                                ),
+                                // Les trois textes
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'ton artisan',
+                                        style: TextStyle(
+                                          fontSize: isVerySmallScreen
+                                              ? 10.0
+                                              : (isSmallScreen ? 12.0 : 14.0),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                  ),
+                                    Expanded(
+                                      child: Text(
+                                        'troOv',
+                                        style: TextStyle(
+                                          fontSize: isVerySmallScreen
+                                              ? 10.0
+                                              : (isSmallScreen ? 12.0 : 14.0),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        'un bon plan',
+                                        style: TextStyle(
+                                          fontSize: isVerySmallScreen
+                                              ? 10.0
+                                              : (isSmallScreen ? 12.0 : 14.0),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                ),
-                              ],
-                              ),
-                            ),
-                            SizedBox(height: isVerySmallScreen ? 10.0 : (isSmallScreen ? 20.0 : 40.0)),
-                            // Les trois textes
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'ton artisan',
-                                    style: TextStyle(
-                                      fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 14.0),
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    'tr00v',
-                                    style: TextStyle(
-                                      fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 14.0),
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    'un bon plan',
-                                    style: TextStyle(
-                                      fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 14.0),
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                    
-                    // Images carousel
-                    SizedBox(height: isVerySmallScreen ? 1.0 : (isSmallScreen ? 1.0 : 20.0)),
-                    AnimatedBuilder(
-                      animation: _contentAnimationController,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: _contentFadeAnimation.value,
-                          child: Container(
-                            height: imageHeight,
-                            child: AnimatedBuilder(
-                              animation: _gridAnimationController,
-                              builder: (context, child) {
-                                return Opacity(
-                                  opacity: _gridFadeAnimation.value,
-                                  child: PageView.builder(
-                                    controller: _pageController,
-                                    itemCount: _services.length,
-                                    onPageChanged: (index) {
-                                      setState(() {
-                                        _currentServiceIndex = index;
-                                      });
-                                    },
-                                    itemBuilder: (context, index) {
-                                      return _buildServicePage(_services[index], imageHeight - 16);
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    
-                    SizedBox(height: isVerySmallScreen ? 1.0 : (isSmallScreen ? 10.0 : 20.0)),
-                    
-                    // Section "Encore plus de raisons" - fixe
-                    Container(
-                      height: statsHeight,
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Encore plus de raisons de nous reTROOVer',
-                              style: TextStyle(
-                                fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 15.0),
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+
+                        // Images carousel
+                        SizedBox(
+                          height: isVerySmallScreen
+                              ? 1.0
+                              : (isSmallScreen ? 1.0 : 20.0),
+                        ),
+                        AnimatedBuilder(
+                          animation: _contentAnimationController,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: _contentFadeAnimation.value,
+                              child: SizedBox(
+                                height: imageHeight,
+                                child: AnimatedBuilder(
+                                  animation: _gridAnimationController,
+                                  builder: (context, child) {
+                                    return Opacity(
+                                      opacity: _gridFadeAnimation.value,
+                                      child: PageView.builder(
+                                        controller: _pageController,
+                                        itemCount: _services.length,
+                                        onPageChanged: (index) {
+                                          setState(() {
+                                            _currentServiceIndex = index;
+                                          });
+                                        },
+                                        itemBuilder: (context, index) {
+                                          return _buildServicePage(
+                                            _services[index],
+                                            imageHeight - 16,
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                              textAlign: TextAlign.start,
+                            );
+                          },
+                        ),
+
+                        SizedBox(
+                          height: isVerySmallScreen
+                              ? 1.0
+                              : (isSmallScreen ? 10.0 : 20.0),
+                        ),
+
+                        // Section "Encore plus de raisons"
+                        Container(
+                          height: statsHeight,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                          ),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 360,
+                              ),
+                              child: Column(
+                                children: [
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Encore plus de raisons de nous reTROOVer',
+                                      style: TextStyle(
+                                        fontSize: isVerySmallScreen
+                                            ? 10.0
+                                            : (isSmallScreen
+                                                ? 12.0
+                                                : 15.0),
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                      textAlign: TextAlign.start,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8.0),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 0),
+                                    width: double.infinity,
+                                    child: Column(
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        _buildStatsGrid(isVerySmall, isSmall),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          SizedBox(height: 8.0),
-                          // Statistiques en grille 3x2
-                          Expanded(
-                            child: Column(
-                              children: [
-                                // Première ligne
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Expanded(child: _buildStatItem('+ 350 artisans', isVerySmallScreen, isSmallScreen)),
-                                      Expanded(child: _buildStatItem('+ 8500 membres', isVerySmallScreen, isSmallScreen)),
-                                      Expanded(child: _buildStatItem('+ 769 produits', isVerySmallScreen, isSmallScreen)),
-                                    ],
-                                  ),
-                                ),
-                                // Deuxième ligne
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Expanded(child: _buildStatItem('+33 partenaires', isVerySmallScreen, isSmallScreen)),
-                                      Expanded(child: _buildStatItem('+ 400 collaborateurs', isVerySmallScreen, isSmallScreen)),
-                                      Expanded(child: _buildStatItem('+ 4 pays', isVerySmallScreen, isSmallScreen)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: Divider(
+                            color: Colors.grey[500],
+                            thickness: 0.5,
+                            height: 30,
                           ),
-                        ],
-                      ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            "On est fait pour être ensemble",
+                            style: TextStyle(
+                              fontSize: isVerySmallScreen
+                                  ? 10.0
+                                  : (isSmallScreen ? 12.0 : 15.0),
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ),
-                    
-                    SizedBox(height: bottomPanelHeight + onEstFaitHeight),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            
-            // Bottom panels
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Section "On est fait pour être ensemble" avec border-top
-                  Container(
-                    height: onEstFaitHeight,
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                      vertical: isVerySmallScreen ? 8.0 : 12.0,
-                      horizontal: 20.0,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: Colors.grey.withOpacity(0.8),
-                          width: 0.5,
+
+                // Bottom panels
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Panneau bas principal
+                      Container(
+                        constraints: BoxConstraints(
+                          minHeight: bottomPanelHeight,
+                          maxHeight: bottomPanelHeight,
                         ),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'On est fait pour être ensemble',
-                        style: TextStyle(
-                          fontSize: isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 15.0),
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  // Panneau noir principal
-                  Container(
-                    constraints: BoxConstraints(
-                      minHeight: bottomPanelHeight,
-                      maxHeight: bottomPanelHeight,
-                    ),
-                    padding: EdgeInsets.all(isVerySmallScreen ? 10.0 : (isSmallScreen ? 12.0 : 16.0)),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(15.0),
-                        topRight: Radius.circular(15.0),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: Offset(0, -3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Header du service
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(isVerySmallScreen ? 6 : (isSmallScreen ? 8 : 12)),
-                              child: Icon(
-                                _services[_currentServiceIndex].icon,
-                                color: AppTheme.primaryBlue,
-                                size: isVerySmallScreen ? 20 : (isSmallScreen ? 24 : 28),
-                              ),
-                            ),
-                            SizedBox(width: isVerySmallScreen ? 12.0 : 16.0),
-                            Expanded(
-                              child: Text(
-                                _services[_currentServiceIndex].title,
-                                style: TextStyle(
-                                  fontSize: isVerySmallScreen ? 14.0 : (isSmallScreen ? 28.0 : 24.0),
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                        padding: EdgeInsets.all(isVerySmallScreen
+                            ? 10.0
+                            : (isSmallScreen ? 12.0 : 16.0)),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6E6E72),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(15.0),
+                            topRight: Radius.circular(15.0),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, -3),
                             ),
                           ],
                         ),
-                        
-                        // Description
-                        Expanded(
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Center(
-                              child: Text(
-                                _services[_currentServiceIndex].description,
-                                style: TextStyle(
-                                  fontSize: isVerySmallScreen ? 12.0 : (isSmallScreen ? 14.0 : 16.0),
-                                  color: Colors.grey[300],
-                                  height: 1.3,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ),
-                        
-                        // Navigation
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                           children: [
                             Row(
-                              children: List.generate(
-                                _services.length,
-                                (index) => AnimatedContainer(
-                                  duration: Duration(milliseconds: 300),
-                                  margin: EdgeInsets.symmetric(horizontal: 2),
-                                  width: _currentServiceIndex == index ? 16 : 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: _currentServiceIndex == index
-                                        ? Colors.white
-                                        : Colors.white.withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(3),
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(
+                                    isVerySmallScreen
+                                        ? 6
+                                        : (isSmallScreen ? 8 : 12),
+                                  ),
+                                  child: Icon(
+                                    _services[_currentServiceIndex].icon,
+                                    color: AppTheme.primaryBlue,
+                                    size: isVerySmallScreen
+                                        ? 20
+                                        : (isSmallScreen ? 24 : 28),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: isVerySmallScreen ? 12.0 : 16.0,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    _services[_currentServiceIndex].title,
+                                    style: TextStyle(
+                                      fontSize: isVerySmallScreen
+                                          ? 14.0
+                                          : (isSmallScreen ? 18.0 : 24.0),
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    _services[_currentServiceIndex]
+                                        .description,
+                                    style: TextStyle(
+                                      fontSize: isVerySmallScreen
+                                          ? 12.0
+                                          : (isSmallScreen ? 14.0 : 16.0),
+                                      color: Colors.grey[300],
+                                      height: 1.3,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ),
                             ),
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white, width: 2),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.arrow_forward, 
-                                  color: Colors.white,
-                                  size: isVerySmallScreen ? 18 : (isSmallScreen ? 20 : 24),
+
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: List.generate(
+                                    _services.length,
+                                    (index) => AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 2,
+                                      ),
+                                      width: _currentServiceIndex == index
+                                          ? 16
+                                          : 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: _currentServiceIndex == index
+                                            ? Colors.white
+                                            : Colors.white.withOpacity(0.3),
+                                        borderRadius:
+                                            BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/home');
-                                },
-                                constraints: BoxConstraints(
-                                  minWidth: isVerySmallScreen ? 35 : 40,
-                                  minHeight: isVerySmallScreen ? 35 : 40,
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.arrow_forward,
+                                      color: Colors.white,
+                                      size: isVerySmallScreen
+                                          ? 18
+                                          : (isSmallScreen ? 20 : 24),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                          context, '/home');
+                                    },
+                                    constraints: BoxConstraints(
+                                      minWidth: isVerySmallScreen ? 35 : 40,
+                                      minHeight: isVerySmallScreen ? 35 : 40,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatItem(String text, bool isVerySmallScreen, bool isSmallScreen) {
+  Widget _buildStatsGrid(bool isVerySmall, bool isSmall) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStatItem("+ 350 artisans", isVerySmall, isSmall),
+                  const SizedBox(height: 2),
+                  _buildStatItem("+33 partenaires", isVerySmall, isSmall),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStatItem("+ 8500 membres", isVerySmall, isSmall),
+                  const SizedBox(height: 2),
+                  _buildStatItem("+ de 400 collaborateurs", isVerySmall, isSmall),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStatItem("+ 769 produits en ligne", isVerySmall, isSmall),
+                  const SizedBox(height: 2),
+                  _buildStatItem("+ 4 pays", isVerySmall, isSmall),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatItem(String text, bool isVerySmall, bool isSmall) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 2.0,
-        vertical: 2.0,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
       child: Center(
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: isVerySmallScreen ? 8.0 : (isSmallScreen ? 9.0 : 11.0),
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
-            ),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isVerySmall ? 9 : (isSmall ? 10 : 11),
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
           ),
         ),
       ),

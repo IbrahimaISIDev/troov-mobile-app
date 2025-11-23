@@ -13,43 +13,45 @@ class MainImageSection extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Container(
-      height: screenWidth < 600 ? 350 : 400,
-      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+      height: screenWidth < 600 ? 360 : 420,
+      margin: EdgeInsets.zero,
+      width: double.infinity,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Container(
-            width: screenWidth < 600 ? 260 : 280,
-            height: screenWidth < 600 ? 300 : 350,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: Offset(0, 10),
+          // Légère ambiance bleutée derrière l'image
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, -0.1),
+                  radius: 0.9,
+                  colors: [
+                    Colors.blue.withOpacity(0.15),
+                    Colors.transparent,
+                  ],
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(25),
-              child: Image.asset(
-                'assets/images/burger.jpeg',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  print("Erreur de chargement de l'image principale: $error");
-                  return Container(
-                    color: Colors.blue.shade100,
-                    child: Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        size: screenWidth < 600 ? 100 : 120,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  );
-                },
               ),
+            ),
+          ),
+          // Image plein écran du bloc, sans arrondi ni ombre
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/burger.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                print("Erreur de chargement de l'image principale: $error");
+                return Container(
+                  color: Colors.blue.shade100,
+                  child: Center(
+                    child: Icon(
+                      Icons.image_not_supported,
+                      size: screenWidth < 600 ? 100 : 120,
+                      color: Colors.white70,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           Positioned(

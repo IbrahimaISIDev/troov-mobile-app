@@ -1,30 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
 import './chat_list_component.dart';
-import './call_list_component.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, this.showBack = false});
+
+  final bool showBack;
 
   @override
   // ignore: library_private_types_in_public_api
   _ChatScreenState createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
@@ -34,20 +22,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         children: [
           // Header avec recherche
           _buildChatHeader(),
-          
-          // Tabs
-          _buildTabBar(),
           const SizedBox(height: 5),
 
-          // Contenu des tabs
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: const [
-                ChatListComponent(),
-                CallListComponent(),
-              ],
-            ),
+          // Liste des discussions uniquement
+          const Expanded(
+            child: ChatListComponent(),
           ),
         ],
       ),
@@ -70,6 +49,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
+          if (widget.showBack) ...[
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.primaryBlue),
+            ),
+            const SizedBox(width: 4),
+          ],
           const Text(
             'Troov Chat',
             style: TextStyle(
@@ -87,24 +73,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             onPressed: () => _showMoreOptions(),
             icon: const Icon(Icons.more_vert, color: AppTheme.primaryBlue),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return Container(
-      color: Colors.white,
-      child: TabBar(
-        controller: _tabController,
-        labelColor: AppTheme.primaryBlue,
-        unselectedLabelColor: Colors.grey.shade600,
-        indicatorColor: AppTheme.primaryBlue,
-        indicatorWeight: 3,
-        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        tabs: const [
-          Tab(text: 'Discussions'),
-          Tab(text: 'Appels'),
         ],
       ),
     );
