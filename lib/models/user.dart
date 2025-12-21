@@ -8,7 +8,11 @@ class User {
   final UserRole role;
   final bool isVerified;
   final DateTime createdAt;
+  final double balance; // Added balance
   final UserLocation? location;
+  final String? pseudo; // Ajouté
+  final List<String>? preferences; // Ajouté
+  final List<String>? paymentMethods; // Ajouté
   final List<String> languages;
 
   User({
@@ -21,7 +25,11 @@ class User {
     required this.role,
     this.isVerified = false,
     required this.createdAt,
+    this.balance = 0.0, // Default to 0.0
     this.location,
+    this.pseudo,
+    this.preferences,
+    this.paymentMethods,
     this.languages = const ['fr'],
   });
 
@@ -32,13 +40,30 @@ class User {
       id: json['id'],
       email: json['email'],
       phone: json['phone'],
-      firstName: json['firstName'],
-      lastName: json['lastName'],
-      profileImage: json['profileImage'],
-      role: UserRole.values.firstWhere((e) => e.toString() == 'UserRole.${json['role']}'),
-      isVerified: json['isVerified'] ?? false,
-      createdAt: DateTime.parse(json['createdAt']),
-      location: json['location'] != null ? UserLocation.fromJson(json['location']) : null,
+      firstName: json['firstName'] ?? json['prenom'] ?? '',
+      lastName: json['lastName'] ?? json['nom'] ?? '',
+      profileImage: json['profileImage'] ?? json['photoUrl'],
+      role: UserRole.values.firstWhere(
+        (e) =>
+            e.toString().split('.').last.toUpperCase() ==
+            (json['role'] as String).toUpperCase(),
+        orElse: () => UserRole.client,
+      ),
+      isVerified: json['isVerified'] ?? json['phoneVerified'] ?? false,
+      createdAt: DateTime.parse(json['createdAt'] ??
+          json['dateCreation'] ??
+          DateTime.now().toIso8601String()),
+      balance: (json['balance'] ?? 0.0).toDouble(), // Parse balance
+      location: json['location'] != null
+          ? UserLocation.fromJson(json['location'])
+          : null,
+      pseudo: json['pseudo'],
+      preferences: json['preferences'] != null
+          ? List<String>.from(json['preferences'])
+          : [],
+      paymentMethods: json['paymentMethods'] != null
+          ? List<String>.from(json['paymentMethods'])
+          : [],
       languages: List<String>.from(json['languages'] ?? ['fr']),
     );
   }
@@ -55,6 +80,9 @@ class User {
       'isVerified': isVerified,
       'createdAt': createdAt.toIso8601String(),
       'location': location?.toJson(),
+      'pseudo': pseudo,
+      'preferences': preferences,
+      'paymentMethods': paymentMethods,
       'languages': languages,
     };
   }
@@ -142,8 +170,8 @@ class ProviderProfile {
       description: json['description'],
       skills: List<String>.from(json['skills']),
       categories: (json['categories'] as List)
-          .map((e) => ServiceCategory.values.firstWhere(
-              (cat) => cat.toString() == 'ServiceCategory.$e'))
+          .map((e) => ServiceCategory.values
+              .firstWhere((cat) => cat.toString() == 'ServiceCategory.$e'))
           .toList(),
       hourlyRate: json['hourlyRate'].toDouble(),
       isAvailable: json['isAvailable'] ?? true,
@@ -159,7 +187,8 @@ class ProviderProfile {
       'userId': userId,
       'description': description,
       'skills': skills,
-      'categories': categories.map((e) => e.toString().split('.').last).toList(),
+      'categories':
+          categories.map((e) => e.toString().split('.').last).toList(),
       'hourlyRate': hourlyRate,
       'isAvailable': isAvailable,
       'photos': photos,
@@ -169,4 +198,3 @@ class ProviderProfile {
     };
   }
 }
-

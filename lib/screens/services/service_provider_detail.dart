@@ -65,10 +65,12 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
 
   Widget _buildSliverAppBar(double screenWidth, double screenHeight) {
     return SliverAppBar(
-      expandedHeight: screenWidth < 600 ? screenHeight * 0.25 : screenHeight * 0.3,
+      expandedHeight:
+          screenWidth < 600 ? screenHeight * 0.25 : screenHeight * 0.3,
       pinned: true,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: screenWidth < 600 ? 20 : 24),
+        icon: Icon(Icons.arrow_back_rounded,
+            color: Colors.white, size: screenWidth < 600 ? 20 : 24),
         onPressed: widget.onBack,
         style: IconButton.styleFrom(
           backgroundColor: Colors.black.withOpacity(0.3),
@@ -119,23 +121,43 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
                       radius: screenWidth < 600 ? 36 : 46,
                       backgroundColor: Colors.grey.shade200,
                       child: ClipOval(
-                        child: Image.asset(
-                          widget.provider.profileImage ?? 'assets/images/burger.png',
-                          fit: BoxFit.cover,
-                          width: screenWidth < 600 ? 72 : 92,
-                          height: screenWidth < 600 ? 72 : 92,
-                          errorBuilder: (context, error, stackTrace) {
-                            print("Erreur de chargement de l'image de profil: $error");
-                            return Container(
-                              color: Colors.grey.shade200,
-                              child: Icon(
-                                Icons.person,
-                                size: screenWidth < 600 ? 40 : 50,
-                                color: Colors.grey.shade400,
+                        child: (widget.provider.profileImage ?? '')
+                                .startsWith('http')
+                            ? Image.network(
+                                widget.provider.profileImage!,
+                                fit: BoxFit.cover,
+                                width: screenWidth < 600 ? 72 : 92,
+                                height: screenWidth < 600 ? 72 : 92,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey.shade200,
+                                    child: Icon(
+                                      Icons.person,
+                                      size: screenWidth < 600 ? 40 : 50,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Image.asset(
+                                widget.provider.profileImage ??
+                                    'assets/images/burger.png',
+                                fit: BoxFit.cover,
+                                width: screenWidth < 600 ? 72 : 92,
+                                height: screenWidth < 600 ? 72 : 92,
+                                errorBuilder: (context, error, stackTrace) {
+                                  print(
+                                      "Erreur de chargement de l'image de profil: $error");
+                                  return Container(
+                                    color: Colors.grey.shade200,
+                                    child: Icon(
+                                      Icons.person,
+                                      size: screenWidth < 600 ? 40 : 50,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
                   ),
@@ -164,7 +186,8 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
                       decoration: BoxDecoration(
                         color: Colors.green.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        border:
+                            Border.all(color: Colors.white.withOpacity(0.3)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -346,10 +369,16 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
             ),
           ),
           SizedBox(height: screenWidth * 0.04),
-          _buildInfoRow(Icons.phone, widget.provider.phone, screenWidth: screenWidth),
-          _buildInfoRow(Icons.location_city, widget.provider.address, screenWidth: screenWidth),
-          _buildInfoRow(Icons.access_time, 'Temps de réponse: ${widget.provider.responseTime}', screenWidth: screenWidth),
-          _buildInfoRow(Icons.monetization_on, 'Tarif: ${widget.provider.hourlyRate} FCFA/h', screenWidth: screenWidth),
+          _buildInfoRow(Icons.phone, widget.provider.phone,
+              screenWidth: screenWidth),
+          _buildInfoRow(Icons.location_city, widget.provider.address,
+              screenWidth: screenWidth),
+          _buildInfoRow(Icons.access_time,
+              'Temps de réponse: ${widget.provider.responseTime}',
+              screenWidth: screenWidth),
+          _buildInfoRow(Icons.monetization_on,
+              'Tarif: ${widget.provider.hourlyRate} FCFA/h',
+              screenWidth: screenWidth),
           _buildInfoRow(
             Icons.check_circle,
             widget.provider.availability ? 'Disponible' : 'Non disponible',
@@ -378,23 +407,41 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
           final imagePath = widget.provider.portfolio[index];
           return ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                print("Erreur de chargement de l'image portfolio: $error");
-                return Container(
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      size: 40,
-                      color: Colors.grey,
-                    ),
+            child: imagePath.startsWith('http')
+                ? Image.network(
+                    imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : Image.asset(
+                    imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      print(
+                          "Erreur de chargement de l'image portfolio: $error");
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           );
         },
       ),
@@ -556,7 +603,8 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, String label, Color color, double screenWidth) {
+  Widget _buildStatItem(IconData icon, String value, String label, Color color,
+      double screenWidth) {
     final double fontSize = screenWidth < 600 ? 12.0 : 14.0;
     final double smallFontSize = screenWidth < 600 ? 10.0 : 12.0;
 
@@ -698,7 +746,8 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
   }
 }
 
-Widget _buildInfoRow(IconData icon, String text, {Color? color, required double screenWidth}) {
+Widget _buildInfoRow(IconData icon, String text,
+    {Color? color, required double screenWidth}) {
   final double fontSize = screenWidth < 600 ? 12.0 : 14.0;
 
   return Padding(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
 import '../../models/user.dart';
 import '../../services/auth_service.dart';
-import 'email_verification_screen.dart';
+import 'otp_code_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -12,7 +12,8 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStateMixin {
+class _RegisterScreenState extends State<RegisterScreen>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -20,23 +21,18 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+  final _pseudoController = TextEditingController();
+  final _codeSecretController = TextEditingController();
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   UserRole _selectedRole = UserRole.client;
   bool _acceptTerms = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initAnimations();
-    _startAnimations();
-  }
 
   void _initAnimations() {
     _animationController = AnimationController(
@@ -74,12 +70,14 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _pseudoController.dispose();
+    _codeSecretController.dispose();
     super.dispose();
   }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (!_acceptTerms) {
       _showErrorSnackBar('Veuillez accepter les conditions d\'utilisation');
       return;
@@ -97,14 +95,20 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         phone: _phoneController.text.trim(),
-        role: _selectedRole,
+        pseudo: _pseudoController.text.trim(),
+        codeSecret: _codeSecretController.text.trim(),
+        role: UserRole.client, // Always register as Client
       );
 
       if (user != null && mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const EmailVerificationScreen(),
+            builder: (context) => OtpCodeScreen(
+              phone: _phoneController.text.trim(),
+              isAccountActivation: true,
+              isProvider: _selectedRole == UserRole.provider,
+            ),
           ),
         );
       }
@@ -140,7 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.height < 700;
     final padding = size.width > 600 ? 64.0 : 20.0;
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -187,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
 
   Widget _buildHeader(bool isSmallScreen) {
     final logoSize = isSmallScreen ? 60.0 : 80.0;
-    
+
     return Column(
       children: [
         TweenAnimationBuilder<double>(
@@ -235,9 +239,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             );
           },
         ),
-        
         SizedBox(height: isSmallScreen ? 15 : 25),
-        
         Text(
           'Créer un compte',
           style: TextStyle(
@@ -247,9 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           ),
           textAlign: TextAlign.center,
         ),
-        
         SizedBox(height: isSmallScreen ? 4 : 6),
-        
         Text(
           'Rejoignez la communauté Troov',
           style: TextStyle(
@@ -305,7 +305,8 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                   value: UserRole.client,
                   groupValue: _selectedRole,
                   activeColor: AppTheme.primaryBlue,
-                  contentPadding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 4 : 8),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: isSmallScreen ? 4 : 8),
                   onChanged: (value) {
                     setState(() {
                       _selectedRole = value!;
@@ -326,7 +327,8 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                   value: UserRole.provider,
                   groupValue: _selectedRole,
                   activeColor: AppTheme.primaryBlue,
-                  contentPadding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 4 : 8),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: isSmallScreen ? 4 : 8),
                   onChanged: (value) {
                     setState(() {
                       _selectedRole = value!;
@@ -382,9 +384,9 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                 ),
               ],
             ),
-            
+
             SizedBox(height: isSmallScreen ? 12 : 16),
-            
+
             // Email
             _buildTextField(
               controller: _emailController,
@@ -396,15 +398,16 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                 if (value == null || value.isEmpty) {
                   return 'Veuillez entrer votre email';
                 }
-                if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
+                if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                    .hasMatch(value)) {
                   return 'Format d\'email invalide';
                 }
                 return null;
               },
             ),
-            
+
             SizedBox(height: isSmallScreen ? 12 : 16),
-            
+
             // Téléphone
             _buildTextField(
               controller: _phoneController,
@@ -419,9 +422,9 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                 return null;
               },
             ),
-            
+
             SizedBox(height: isSmallScreen ? 12 : 16),
-            
+
             // Mot de passe
             _buildTextField(
               controller: _passwordController,
@@ -431,7 +434,9 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
               isSmallScreen: isSmallScreen,
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   color: AppTheme.primaryBlue,
                   size: isSmallScreen ? 20 : 24,
                 ),
@@ -451,9 +456,9 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                 return null;
               },
             ),
-            
+
             SizedBox(height: isSmallScreen ? 12 : 16),
-            
+
             // Confirmation mot de passe
             _buildTextField(
               controller: _confirmPasswordController,
@@ -463,7 +468,9 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
               isSmallScreen: isSmallScreen,
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscureConfirmPassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   color: AppTheme.primaryBlue,
                   size: isSmallScreen ? 20 : 24,
                 ),
@@ -483,14 +490,32 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                 return null;
               },
             ),
-            
+
+            SizedBox(height: isSmallScreen ? 12 : 16),
+
+            // Code Secret (Pour App Lock)
+            _buildTextField(
+              controller: _codeSecretController,
+              label: 'Code Secret (4 chiffres - Optionnel)',
+              icon: Icons.lock_clock_outlined,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              isSmallScreen: isSmallScreen,
+              validator: (value) {
+                if (value != null && value.isNotEmpty && value.length != 4) {
+                  return 'Doit contenir exactement 4 chiffres';
+                }
+                return null;
+              },
+            ),
+
             SizedBox(height: isSmallScreen ? 16 : 20),
-            
+
             // Conditions d'utilisation
             _buildTermsCheckbox(isSmallScreen),
-            
+
             SizedBox(height: isSmallScreen ? 20 : 24),
-            
+
             // Bouton d'inscription
             _buildRegisterButton(isSmallScreen),
           ],
@@ -619,6 +644,33 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
     );
   }
 
+  bool get _isFormValid =>
+      _firstNameController.text.isNotEmpty &&
+      _lastNameController.text.isNotEmpty &&
+      _emailController.text.isNotEmpty &&
+      _phoneController.text.isNotEmpty &&
+      _passwordController.text.isNotEmpty &&
+      _confirmPasswordController.text.isNotEmpty &&
+      _acceptTerms;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAnimations();
+    _startAnimations();
+
+    // Listen to changes to update button state
+    void updateState() => setState(() {});
+    _firstNameController.addListener(updateState);
+    _lastNameController.addListener(updateState);
+    _emailController.addListener(updateState);
+    _phoneController.addListener(updateState);
+    _passwordController.addListener(updateState);
+    _confirmPasswordController.addListener(updateState);
+  }
+
+  // ... (dispose and other methods) ...
+
   Widget _buildRegisterButton(bool isSmallScreen) {
     return Container(
       width: double.infinity,
@@ -635,16 +687,19 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
         ],
       ),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _register,
+        onPressed: (_isLoading || !_isFormValid) ? null : _register,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryBlue,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppTheme.primaryBlue.withOpacity(0.6),
+          disabledBackgroundColor:
+              Colors.grey[300], // Visual feedback for disabled state
+          disabledForegroundColor: Colors.grey[500],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
         ),
+// ...
         child: _isLoading
             ? SizedBox(
                 width: isSmallScreen ? 18 : 22,
@@ -698,9 +753,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
               ),
             ],
           ),
-          
           SizedBox(height: isSmallScreen ? 16 : 20),
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -733,7 +786,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
   }) {
     final buttonSize = isSmallScreen ? 45.0 : 55.0;
     final iconSize = isSmallScreen ? 22.0 : 26.0;
-    
+
     return Container(
       width: buttonSize,
       height: buttonSize,
@@ -775,7 +828,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
   }) {
     final buttonSize = isSmallScreen ? 45.0 : 55.0;
     final imageSize = isSmallScreen ? 22.0 : 26.0;
-    
+
     return Container(
       width: buttonSize,
       height: buttonSize,

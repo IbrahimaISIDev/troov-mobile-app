@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../utils/theme.dart';
+import '../../../services/auth_service.dart';
+import '../../../models/user.dart';
 
-class HomeTabHeader extends StatelessWidget {
+class HomeTabHeader extends StatefulWidget {
   final VoidCallback onNotificationsTap;
   final VoidCallback onProfileTap;
   final VoidCallback onMySpaceTap;
@@ -18,6 +20,29 @@ class HomeTabHeader extends StatelessWidget {
     required this.onThemeToggle,
     required this.isDarkMode,
   }) : super(key: key);
+
+  @override
+  State<HomeTabHeader> createState() => _HomeTabHeaderState();
+}
+
+class _HomeTabHeaderState extends State<HomeTabHeader> {
+  User? _currentUser;
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await _authService.getCurrentUser();
+    if (mounted) {
+      setState(() {
+        _currentUser = user;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +97,8 @@ class HomeTabHeader extends StatelessWidget {
                     child: ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.notifications_active_rounded, size: 20),
+                      leading:
+                          Icon(Icons.notifications_active_rounded, size: 20),
                       title: Text('Nouveau message'),
                       subtitle: Text('Tu as reçu un nouveau message.'),
                     ),
@@ -84,7 +110,8 @@ class HomeTabHeader extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(Icons.discount_rounded, size: 20),
                       title: Text('Promo sur tes services'),
-                      subtitle: Text('Profite de nouvelles offres personnalisées.'),
+                      subtitle:
+                          Text('Profite de nouvelles offres personnalisées.'),
                     ),
                   ),
                   const PopupMenuItem(
@@ -92,9 +119,11 @@ class HomeTabHeader extends StatelessWidget {
                     child: ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.home_repair_service_rounded, size: 20),
+                      leading:
+                          Icon(Icons.home_repair_service_rounded, size: 20),
                       title: Text('Nouvel artisan disponible'),
-                      subtitle: Text('Un nouvel artisan correspond à ta recherche.'),
+                      subtitle:
+                          Text('Un nouvel artisan correspond à ta recherche.'),
                     ),
                   ),
                   const PopupMenuItem(
@@ -109,7 +138,7 @@ class HomeTabHeader extends StatelessWidget {
                 ],
                 onSelected: (value) {
                   if (value == 'see_more') {
-                    onNotificationsTap();
+                    widget.onNotificationsTap();
                   }
                 },
                 child: Container(
@@ -142,16 +171,16 @@ class HomeTabHeader extends StatelessWidget {
                 onSelected: (value) {
                   switch (value) {
                     case 'profile':
-                      onProfileTap();
+                      widget.onProfileTap();
                       break;
                     case 'myspace':
-                      onMySpaceTap();
+                      widget.onMySpaceTap();
                       break;
                     case 'theme':
-                      onThemeToggle();
+                      widget.onThemeToggle();
                       break;
                     case 'logout':
-                      onLogoutTap();
+                      widget.onLogoutTap();
                       break;
                   }
                 },
@@ -171,7 +200,7 @@ class HomeTabHeader extends StatelessWidget {
                       dense: true,
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(Icons.storefront_rounded, size: 20),
-                      title: Text('Mon espace'),
+                      title: Text('Ma boutique'),
                     ),
                   ),
                   PopupMenuItem(
@@ -182,7 +211,9 @@ class HomeTabHeader extends StatelessWidget {
                       leading: Icon(Icons.color_lens_outlined, size: 20),
                       title: Text('Thème'),
                       trailing: Icon(
-                        isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                        widget.isDarkMode
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
                         size: 18,
                       ),
                     ),
@@ -218,7 +249,11 @@ class HomeTabHeader extends StatelessWidget {
                       CircleAvatar(
                         radius: screenWidth < 600 ? 14 : 16,
                         backgroundColor: Colors.grey.shade200,
-                        backgroundImage: const AssetImage('assets/images/profile.png'),
+                        backgroundImage: (_currentUser?.profileImage != null &&
+                                _currentUser!.profileImage!.isNotEmpty)
+                            ? NetworkImage(_currentUser!.profileImage!)
+                            : const AssetImage('assets/images/profile.png')
+                                as ImageProvider,
                       ),
                       SizedBox(width: screenWidth * 0.01),
                       Icon(

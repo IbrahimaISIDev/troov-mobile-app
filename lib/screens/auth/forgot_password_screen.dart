@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
+import '../../services/auth_service.dart';
 import 'otp_code_screen.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
@@ -38,7 +39,7 @@ class ForgotPasswordScreen extends StatelessWidget {
 
   Widget _buildHeader(bool isSmallScreen) {
     final logoSize = isSmallScreen ? 70.0 : 90.0;
-    
+
     return Column(
       children: [
         // Logo avec animation
@@ -87,9 +88,9 @@ class ForgotPasswordScreen extends StatelessWidget {
             );
           },
         ),
-        
+
         SizedBox(height: isSmallScreen ? 20 : 30),
-        
+
         Text(
           'Mot de passe oublié',
           style: TextStyle(
@@ -99,9 +100,9 @@ class ForgotPasswordScreen extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        
+
         SizedBox(height: isSmallScreen ? 6 : 8),
-        
+
         Text(
           'Entrez votre email ou numéro pour recevoir un code.',
           style: TextStyle(
@@ -115,6 +116,75 @@ class ForgotPasswordScreen extends StatelessWidget {
   }
 
   Widget _buildFormCard(bool isSmallScreen, BuildContext context) {
+    // Note: Since this is a StatelessWidget, we'll use a local controller and function wrapper
+    // ideally this should be a StatefulWidget, but we can make it work or convert it.
+    // For simplicity/cleanliness, let's keep it clean but functional.
+    // We'll assume the parent/navigator handles the context properly.
+    return _ForgotPasswordForm(isSmallScreen: isSmallScreen);
+  }
+}
+
+class _ForgotPasswordForm extends StatefulWidget {
+  final bool isSmallScreen;
+  const _ForgotPasswordForm({Key? key, required this.isSmallScreen})
+      : super(key: key);
+
+  @override
+  State<_ForgotPasswordForm> createState() => _ForgotPasswordFormState();
+}
+
+class _ForgotPasswordFormState extends State<_ForgotPasswordForm> {
+  final _controller = TextEditingController();
+  bool _isLoading = false;
+
+  void _submit() async {
+    final login = _controller.text.trim();
+    if (login.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Veuillez entrer votre email ou téléphone')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = AuthService(); // Assuming AuthService is imported
+      // Call backend to send OTP
+      await authService.forgotPassword(login);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Code envoyé avec succès')),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OtpCodeScreen(
+            login: login,
+            isResetPassword: true,
+            isAccountActivation: false,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Erreur: ${e.toString().replaceAll('Exception: ', '')}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -130,14 +200,15 @@ class ForgotPasswordScreen extends StatelessWidget {
             ],
           ),
           child: TextField(
+            controller: _controller,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               labelText: 'Email ou numéro de téléphone',
-              hintText: 'Veillez entrer votre email ou numéro de téléphone',
+              hintText: 'Entrez votre email ou numéro',
               prefixIcon: Icon(
                 Icons.alternate_email_rounded,
                 color: AppTheme.primaryBlue,
-                size: isSmallScreen ? 20 : 24,
+                size: widget.isSmallScreen ? 20 : 24,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -156,15 +227,11 @@ class ForgotPasswordScreen extends StatelessWidget {
                   width: 2,
                 ),
               ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.red),
-              ),
               filled: true,
               fillColor: Colors.white,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: isSmallScreen ? 16 : 20,
+                vertical: widget.isSmallScreen ? 16 : 20,
               ),
             ),
           ),
@@ -180,15 +247,14 @@ class ForgotPasswordScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const OtpCodeScreen(),
-                ),
-              );
-            },
-            child: const Text('Continuer'),
+            onPressed: _isLoading ? null : _submit,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
+                : const Text('Continuer'),
           ),
         ),
       ],

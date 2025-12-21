@@ -50,7 +50,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           'id': '2',
           'text': 'Ça va bien merci ! Et toi ?',
           'isMe': true,
-          'timestamp': DateTime.now().subtract(const Duration(hours: 2, minutes: 5)),
+          'timestamp':
+              DateTime.now().subtract(const Duration(hours: 2, minutes: 5)),
           'status': 'read'
         },
         {
@@ -107,7 +108,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               },
             ),
           ),
-          
+
           // Zone de saisie
           _buildMessageInput(),
         ],
@@ -152,7 +153,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   widget.isOnline ? 'En ligne' : 'Hors ligne',
                   style: TextStyle(
                     fontSize: 12,
-                    color: widget.isOnline ? Colors.lightGreenAccent : Colors.white70,
+                    color: widget.isOnline
+                        ? Colors.lightGreenAccent
+                        : Colors.white70,
                   ),
                 ),
               ],
@@ -202,93 +205,88 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Widget _buildMessage(Map<String, dynamic> message) {
     final isMe = message['isMe'] as bool;
-    
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          if (!isMe) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.primaryBlue.withOpacity(0.7),
-              child: Text(
-                widget.contactName[0],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+          Row(
+            mainAxisAlignment:
+                isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (!isMe) ...[
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppTheme.primaryBlue.withOpacity(0.2),
+                  child: Text(widget.contactName[0],
+                      style: const TextStyle(
+                          fontSize: 10,
+                          color: AppTheme.primaryBlue,
+                          fontWeight: FontWeight.bold)),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isMe ? AppTheme.primaryBlue : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message['text'],
-                    style: TextStyle(
-                      color: isMe ? Colors.white : Colors.black87,
-                      fontSize: 16,
+                const SizedBox(width: 8),
+              ],
+              Flexible(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: isMe
+                        ? LinearGradient(colors: [
+                            Colors.blue.shade600,
+                            Colors.blue.shade900
+                          ])
+                        : null,
+                    color: isMe ? null : Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(24),
+                      topRight: const Radius.circular(24),
+                      bottomLeft: isMe
+                          ? const Radius.circular(24)
+                          : const Radius.circular(4),
+                      bottomRight: isMe
+                          ? const Radius.circular(4)
+                          : const Radius.circular(24),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatTime(message['timestamp']),
-                        style: TextStyle(
-                          color: isMe ? Colors.white70 : Colors.grey.shade600,
-                          fontSize: 12,
-                        ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
                       ),
-                      if (isMe) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          _getStatusIcon(message['status']),
-                          size: 16,
-                          color: message['status'] == 'read' ? Colors.white : Colors.white70,
-                        ),
-                      ],
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-          
-          if (isMe) ...[
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey.shade400,
-              child: const Text(
-                'M',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message['text'],
+                        style: TextStyle(
+                          color: isMe ? Colors.white : Colors.black87,
+                          fontSize: 16,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+                top: 5, left: isMe ? 0 : 40, right: isMe ? 0 : 0),
+            child: Text(
+              _formatTime(message['timestamp']),
+              style: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -324,7 +322,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 decoration: const InputDecoration(
                   hintText: 'Tapez votre message...',
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
@@ -348,7 +347,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inMinutes < 1) {
       return 'À l\'instant';
     } else if (difference.inHours < 1) {
@@ -357,19 +356,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } else {
       return '${dateTime.day}/${dateTime.month} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'sent':
-        return Icons.check;
-      case 'delivered':
-        return Icons.done_all;
-      case 'read':
-        return Icons.done_all;
-      default:
-        return Icons.access_time;
     }
   }
 
@@ -576,9 +562,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               widget.isOnline ? 'En ligne' : 'Hors ligne',
               valueColor: widget.isOnline ? Colors.green : Colors.grey,
             ),
-            _buildInfoRow(Icons.access_time, 'Dernière connexion', 'il y a 5 min'),
+            _buildInfoRow(
+                Icons.access_time, 'Dernière connexion', 'il y a 5 min'),
             _buildInfoRow(Icons.phone, 'Téléphone', '+221 77 123 45 67'),
-            _buildInfoRow(Icons.email, 'Email', '${widget.contactName.toLowerCase().replaceAll(' ', '.')}@email.com'),
+            _buildInfoRow(Icons.email, 'Email',
+                '${widget.contactName.toLowerCase().replaceAll(' ', '.')}@email.com'),
           ],
         ),
         actions: [
@@ -594,14 +582,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,
             ),
-            child: const Text('Voir profil', style: TextStyle(color: Colors.white)),
+            child: const Text('Voir profil',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, {Color? valueColor}) {
+  Widget _buildInfoRow(IconData icon, String label, String value,
+      {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -688,8 +678,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            type == 'photos' ? Icons.photo_library :
-            type == 'videos' ? Icons.video_library : Icons.folder,
+            type == 'photos'
+                ? Icons.photo_library
+                : type == 'videos'
+                    ? Icons.video_library
+                    : Icons.folder,
             size: 64,
             color: Colors.grey.shade400,
           ),

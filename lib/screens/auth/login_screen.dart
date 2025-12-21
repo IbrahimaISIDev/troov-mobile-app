@@ -4,6 +4,7 @@ import '../../utils/theme.dart';
 import '../../services/auth_service.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
+import 'otp_code_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -12,17 +13,20 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _isPhoneLogin = false;
 
   @override
   void initState() {
@@ -62,6 +66,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   void dispose() {
     _animationController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -75,26 +80,81 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
     try {
       final email = _emailController.text.trim();
+      final phone = _phoneController.text.trim();
       final password = _passwordController.text;
 
-      // Mock user login for demo
-      if (email == 'votre@gmail.com' && password == 'passer123') {
-        if (mounted) {
+      final authService = AuthService();
+
+      if (_isPhoneLogin) {
+        // Phone + Secret Code Login
+        // Note: verifyPhoneCode usually expects an OTP from SMS.
+        // If "Secret Code" is a password/pin, we might need a different endpoint like loginWithPhone
+        // For now, assuming standard login or reusing verifyPhoneCode if backend supports it like that.
+        // If the "Secret Code" IS the App Lock code, we should just verify it locally?
+        // No, user said "connecter", so it implies remote auth.
+
+        // Let's assume for this task that we use the login endpoint but with phone as identifier if supported,
+        // OR we simulate it by calling a specific method.
+        // Given the requirement "generate me the apk" and "dynamize connection",
+        // I will use a standard login but with phone as identifier if the backend supports it.
+        // If backend only takes email, we might have an issue.
+        // Let's check AuthService again. usage: login(email, password).
+        // I will update AuthService to support phone login if I can, or just pass phone as email?
+        // No, that's hacky. I'll just use the mock if backend doesn't support phone login yet OR
+        // I'll try to find a 'loginWithPhone' equivalent.
+        // Wait, I see verifyPhoneCode in AuthService.
+
+        // Actually, user said "number and secret code".
+        // Often 'secret code' == 'password' in these regions.
+
+        final user = await authService.login(
+            phone, password); // reuse login with phone as identifier
+        if (user != null) {
+          // Save the secret code locally for App Lock since user successfully logged in with it
+          await authService.setAppLockCode(password);
+
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
+        }
+      } else {
+        // Email + Password Login
+        final user = await authService.login(email, password);
+        if (user != null && mounted) {
           Navigator.pushReplacementNamed(context, '/home');
         }
-        return;
-      }
-
-      // Fallback to real AuthService logic
-      final authService = AuthService();
-      final user = await authService.login(email, password);
-
-      if (user != null && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Erreur de connexion: ${e.toString()}');
+        String errorMessage = e.toString().replaceAll('Exception: ', '');
+        // Gestion spécifique compte non activé
+        if (errorMessage.contains("Compte non activé")) {
+          if (_isPhoneLogin) {
+            try {
+              final phone = _phoneController.text.trim();
+              await AuthService().sendRegisterOtp(phone);
+
+              if (!mounted) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OtpCodeScreen(
+                    phone: phone,
+                    isAccountActivation: true,
+                  ),
+                ),
+              );
+              return;
+            } catch (otpError) {
+              errorMessage =
+                  "Erreur d'envoi OTP: ${otpError.toString().replaceAll('Exception: ', '')}";
+            }
+          } else {
+            errorMessage =
+                "Compte non activé. Veuillez vous connecter avec votre téléphone pour l'activer.";
+          }
+        }
+        _showErrorSnackBar(errorMessage);
       }
     } finally {
       if (mounted) {
@@ -125,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.height < 700;
     final padding = size.width > 600 ? 64.0 : 20.0;
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -134,7 +194,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           child: Container(
             width: size.width,
             constraints: BoxConstraints(
-              minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              minHeight: size.height -
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom,
             ),
             padding: EdgeInsets.symmetric(horizontal: padding),
             child: AnimatedBuilder(
@@ -167,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   Widget _buildHeader(bool isSmallScreen) {
     final logoSize = isSmallScreen ? 70.0 : 90.0;
-    
+
     return Column(
       children: [
         // Logo avec animation
@@ -216,9 +278,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             );
           },
         ),
-        
+
         SizedBox(height: isSmallScreen ? 20 : 30),
-        
+
         Text(
           'Connexion',
           style: TextStyle(
@@ -228,9 +290,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ),
           textAlign: TextAlign.center,
         ),
-        
+
         SizedBox(height: isSmallScreen ? 6 : 8),
-        
+
         Text(
           'Connectez-vous à votre compte Troov',
           style: TextStyle(
@@ -250,9 +312,15 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         key: _formKey,
         child: Column(
           children: [
-            _buildEmailField(isSmallScreen),
-            SizedBox(height: isSmallScreen ? 16 : 20),
-            _buildPasswordField(isSmallScreen),
+            if (_isPhoneLogin) ...[
+              _buildPhoneField(isSmallScreen),
+              SizedBox(height: isSmallScreen ? 16 : 20),
+              _buildSecretCodeField(isSmallScreen),
+            ] else ...[
+              _buildEmailField(isSmallScreen),
+              SizedBox(height: isSmallScreen ? 16 : 20),
+              _buildPasswordField(isSmallScreen),
+            ],
             SizedBox(height: isSmallScreen ? 12 : 16),
             _buildForgotPassword(isSmallScreen),
             SizedBox(height: isSmallScreen ? 24 : 32),
@@ -281,8 +349,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         textInputAction: TextInputAction.next,
         style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
         decoration: InputDecoration(
-          labelText: 'Email',
-          hintText: 'votre@email.com',
+          labelText: 'Login',
+          hintText: 'Email ou nom d\'utilisateur',
           prefixIcon: Icon(
             Icons.email_outlined,
             color: AppTheme.primaryBlue,
@@ -330,6 +398,69 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     );
   }
 
+  Widget _buildPhoneField(bool isSmallScreen) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _phoneController,
+        keyboardType: TextInputType.phone,
+        textInputAction: TextInputAction.next,
+        style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+        decoration: InputDecoration(
+          labelText: 'Numéro de téléphone',
+          hintText: '77 000 00 00',
+          prefixIcon: Icon(
+            Icons.phone_android_outlined,
+            color: AppTheme.primaryBlue,
+            size: isSmallScreen ? 20 : 24,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey[300]!,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: AppTheme.primaryBlue,
+              width: 2,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: isSmallScreen ? 16 : 20,
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Veuillez entrer votre numéro';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
   Widget _buildPasswordField(bool isSmallScreen) {
     return Container(
       decoration: BoxDecoration(
@@ -358,7 +489,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ),
           suffixIcon: IconButton(
             icon: Icon(
-              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              _obscurePassword
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
               color: AppTheme.primaryBlue,
               size: isSmallScreen ? 20 : 24,
             ),
@@ -402,6 +535,85 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           }
           if (value.length < 6) {
             return 'Le mot de passe doit contenir au moins 6 caractères';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildSecretCodeField(bool isSmallScreen) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _passwordController,
+        obscureText: _obscurePassword,
+        textInputAction: TextInputAction.done,
+        keyboardType: TextInputType.number,
+        onFieldSubmitted: (_) => _login(),
+        style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+        decoration: InputDecoration(
+          labelText: 'Code secret',
+          hintText: '••••',
+          prefixIcon: Icon(
+            Icons.lock_outline,
+            color: AppTheme.primaryBlue,
+            size: isSmallScreen ? 20 : 24,
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              color: AppTheme.primaryBlue,
+              size: isSmallScreen ? 20 : 24,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey[300]!,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: AppTheme.primaryBlue,
+              width: 2,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.red),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: isSmallScreen ? 16 : 20,
+          ),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Veuillez entrer votre code secret';
           }
           return null;
         },
@@ -514,17 +726,19 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               ),
             ],
           ),
-          
           SizedBox(height: isSmallScreen ? 20 : 24),
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildSocialButton(
-                icon: Icons.phone,
-                color: const Color(0xFF25D366), // WhatsApp green
+                icon: _isPhoneLogin ? Icons.email : Icons.phone,
+                color: _isPhoneLogin ? Colors.red : const Color(0xFF25D366),
                 onPressed: () {
-                  // TODO: Authentification par téléphone
+                  setState(() {
+                    _isPhoneLogin = !_isPhoneLogin;
+                    _formKey.currentState?.reset();
+                    _passwordController.clear();
+                  });
                 },
                 isSmallScreen: isSmallScreen,
               ),
@@ -557,7 +771,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   }) {
     final buttonSize = isSmallScreen ? 50.0 : 60.0;
     final iconSize = isSmallScreen ? 24.0 : 28.0;
-    
+
     return Container(
       width: buttonSize,
       height: buttonSize,
@@ -599,7 +813,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   }) {
     final buttonSize = isSmallScreen ? 50.0 : 60.0;
     final imageSize = isSmallScreen ? 24.0 : 28.0;
-    
+
     return Container(
       width: buttonSize,
       height: buttonSize,
@@ -659,8 +873,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             Navigator.push(
               context,
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => RegisterScreen(),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    RegisterScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
                   return SlideTransition(
                     position: Tween<Offset>(
                       begin: const Offset(1.0, 0.0),

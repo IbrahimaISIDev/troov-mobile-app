@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
+import '../services/auth_service.dart';
 import 'home/home_tab_screen.dart';
 import 'transfert/transfer_screen.dart';
 import 'services/services_screen.dart';
@@ -49,7 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           HomeTabScreen(
             onThemeToggle: widget.onThemeToggle,
-            onLogout: () {
+            onLogout: () async {
+              await AuthService().logout();
+
+              if (!mounted) return;
+
               final messenger = ScaffoldMessenger.of(context);
               messenger.showSnackBar(
                 const SnackBar(
@@ -57,12 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   duration: Duration(milliseconds: 800),
                 ),
               );
-              Future.delayed(const Duration(milliseconds: 800), () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => WelcomeScreen()),
-                  (route) => false,
-                );
-              });
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => WelcomeScreen()),
+                (route) => false,
+              );
             },
             onProfile: () {
               setState(() {
@@ -136,7 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _currentIndex == 0 ? (AppTheme.primaryBlue).withOpacity(0.1) : Colors.transparent,
+                  color: _currentIndex == 0
+                      ? (AppTheme.primaryBlue).withOpacity(0.1)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.home_rounded),
@@ -147,7 +152,9 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _currentIndex == 1 ? (AppTheme.primaryBlue).withOpacity(0.1) : Colors.transparent,
+                  color: _currentIndex == 1
+                      ? (AppTheme.primaryBlue).withOpacity(0.1)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.swap_horiz_rounded),
@@ -158,7 +165,9 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _currentIndex == 2 ? (AppTheme.primaryBlue).withOpacity(0.1) : Colors.transparent,
+                  color: _currentIndex == 2
+                      ? (AppTheme.primaryBlue).withOpacity(0.1)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Container(
@@ -185,7 +194,9 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _currentIndex == 3 ? (AppTheme.primaryBlue).withOpacity(0.1) : Colors.transparent,
+                  color: _currentIndex == 3
+                      ? (AppTheme.primaryBlue).withOpacity(0.1)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.design_services_rounded),
@@ -196,7 +207,9 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _currentIndex == 4 ? (AppTheme.primaryBlue).withOpacity(0.1) : Colors.transparent,
+                  color: _currentIndex == 4
+                      ? (AppTheme.primaryBlue).withOpacity(0.1)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.settings_rounded),

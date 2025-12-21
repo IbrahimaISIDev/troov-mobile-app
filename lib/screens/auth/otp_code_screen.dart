@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
+import '../../services/auth_service.dart';
 import 'reset_password_screen.dart';
+import 'subscription_screen.dart';
+import 'profile_setup_screen.dart';
 
 class OtpCodeScreen extends StatefulWidget {
-  const OtpCodeScreen({Key? key}) : super(key: key);
+  final String? phone;
+  final String? login; // Email ou Phone pour reset password
+  final bool isAccountActivation;
+  final bool isResetPassword;
+  final bool isProvider;
+
+  const OtpCodeScreen({
+    Key? key,
+    this.phone,
+    this.login,
+    this.isAccountActivation = false,
+    this.isResetPassword = false,
+    this.isProvider = false,
+  }) : super(key: key);
 
   @override
   State<OtpCodeScreen> createState() => _OtpCodeScreenState();
@@ -32,22 +48,93 @@ class _OtpCodeScreenState extends State<OtpCodeScreen> {
     });
   }
 
-  void _onVerify() {
+  bool _isLoading = false;
+
+  void _onVerify() async {
     final code = _digits.join();
-    if (code == '123456') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ResetPasswordScreen(),
-        ),
-      );
-    } else {
+    if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Code incorrect, veuillez réessayer.'),
-          duration: Duration(seconds: 2),
-        ),
+        const SnackBar(content: Text('Veuillez entrer le code complet.')),
       );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final authService = AuthService();
+
+    try {
+      if (widget.isAccountActivation && widget.phone != null) {
+        // Activation de compte
+        final isValid =
+            await authService.verifyRegisterOtp(widget.phone!, code);
+
+        if (isValid) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Compte activé avec succès !')),
+          );
+
+          if (widget.isProvider) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const SubscriptionScreen()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const ProfileSetupScreen()),
+            );
+          }
+        } else {
+          throw Exception('Code invalide ou expiré');
+        }
+      } else if (widget.isResetPassword && widget.login != null) {
+        // Réinitialisation de mot de passe
+        final isValid = await authService.verifyResetOtp(widget.login!, code);
+
+        if (isValid) {
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ResetPasswordScreen(login: widget.login!),
+            ),
+          );
+        } else {
+          throw Exception('Code invalide ou expiré');
+        }
+      } else {
+        // Fallback or Error
+        throw Exception(
+            'Mode de vérification non supporté ou paramètres manquants');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _resendCode() async {
+    if (widget.phone != null) {
+      try {
+        final authService = AuthService();
+        await authService.sendRegisterOtp(widget.phone!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Code renvoyé avec succès.')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
     }
   }
 
@@ -88,10 +175,20 @@ class _OtpCodeScreenState extends State<OtpCodeScreen> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          onPressed: _onVerify,
-                          child: const Text('Vérifier le code'),
+                          onPressed: _isLoading ? null : _onVerify,
+                          child: _isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white)
+                              : const Text('Vérifier le code'),
                         ),
                       ),
+                      if (widget.isAccountActivation) ...[
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: _resendCode,
+                          child: const Text('Renvoyer le code'),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -166,7 +263,9 @@ class _OtpCodeScreenState extends State<OtpCodeScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Entrez le code à 6 chiffres envoyé à votre email.',
+          widget.isAccountActivation
+              ? 'Entrez le code envoyé au ${widget.phone ?? "numéro indiqué"}.'
+              : 'Entrez le code à 6 chiffres envoyé à votre email.',
           style: TextStyle(
             fontSize: isSmallScreen ? 13 : 14,
             color: Colors.grey[600],

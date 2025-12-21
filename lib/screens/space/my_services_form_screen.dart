@@ -1,151 +1,172 @@
 import 'package:flutter/material.dart';
-import '../../utils/theme.dart';
 
-class MyServicesFormScreen extends StatelessWidget {
+class MyServicesFormScreen extends StatefulWidget {
   const MyServicesFormScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MyServicesFormScreen> createState() => _MyServicesFormScreenState();
+}
+
+class _MyServicesFormScreenState extends State<MyServicesFormScreen> {
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        title: const Text('Nouveau Service',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: const Text(
-          'Mes services',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
+        centerTitle: true,
       ),
-      backgroundColor: Colors.grey.shade50,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Ajouter / modifier un service',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Renseignez les informations principales de votre prestation pour apparaître de façon professionnelle dans Troov.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle('Détails du service'),
+                const SizedBox(height: 15),
+                _buildTextField(
+                    label: 'Titre',
+                    hint: 'Ex: Tresses Africaines',
+                    icon: Icons.title),
+                const SizedBox(height: 15),
+                _buildTextField(
+                    label: 'Description',
+                    hint: 'Décrivez votre prestation...',
+                    maxLines: 3,
+                    icon: Icons.description),
+                const SizedBox(height: 25),
+                _buildSectionTitle('Tarification & Durée'),
+                const SizedBox(height: 15),
+                Row(
                   children: [
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Titre du service',
-                        prefixIcon: const Icon(Icons.title_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Description détaillée',
-                        alignLabelWithHint: true,
-                        prefixIcon: const Icon(Icons.description_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              labelText: 'Prix (FCFA)',
-                              prefixIcon: const Icon(Icons.attach_money_rounded),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              labelText: 'Durée (ex: 1h)',
-                              prefixIcon: const Icon(Icons.schedule_rounded),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Catégorie',
-                        prefixIcon: const Icon(Icons.category_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                    Expanded(
+                        child: _buildTextField(
+                            label: 'Prix',
+                            hint: '0',
+                            suffix: 'FCFA',
+                            keyboardType: TextInputType.number)),
+                    const SizedBox(width: 15),
+                    Expanded(
+                        child: _buildTextField(
+                            label: 'Durée',
+                            hint: 'Ex: 1h 30',
+                            icon: Icons.timer)),
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlue,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                const SizedBox(height: 25),
+                _buildSectionTitle('Média'),
+                const SizedBox(height: 15),
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: Colors.grey.shade300, style: BorderStyle.solid),
                   ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Service enregistré (UI démo).')),
-                    );
-                  },
-                  icon: const Icon(Icons.check_circle_outline_rounded),
-                  label: const Text(
-                    'Enregistrer le service',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.add_a_photo_outlined,
+                          color: Colors.grey, size: 30),
+                      SizedBox(height: 8),
+                      Text('Ajouter une photo de couverture',
+                          style: TextStyle(color: Colors.grey)),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Enregistrer le service',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    String? hint,
+    IconData? icon,
+    String? suffix,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Colors.black54)),
+        const SizedBox(height: 8),
+        TextFormField(
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+            prefixIcon:
+                icon != null ? Icon(icon, color: Colors.grey, size: 20) : null,
+            suffixText: suffix,
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.blueAccent),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

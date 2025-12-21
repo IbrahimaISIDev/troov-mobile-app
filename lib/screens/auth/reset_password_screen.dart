@@ -1,8 +1,70 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
+import '../../services/auth_service.dart';
 
-class ResetPasswordScreen extends StatelessWidget {
-  const ResetPasswordScreen({Key? key}) : super(key: key);
+class ResetPasswordScreen extends StatefulWidget {
+  final String login; // Email ou Phone
+
+  const ResetPasswordScreen({
+    Key? key,
+    required this.login,
+  }) : super(key: key);
+
+  @override
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+}
+
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  void _onResetPassword() async {
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez remplir tous les champs')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Les mots de passe ne correspondent pas')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = AuthService();
+      await authService.resetPassword(widget.login, password);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Mot de passe réinitialisé avec succès !')),
+      );
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +99,7 @@ class ResetPasswordScreen extends StatelessWidget {
 
   Widget _buildHeader(bool isSmallScreen) {
     final logoSize = isSmallScreen ? 70.0 : 90.0;
-    
+
     return Column(
       children: [
         // Logo avec animation
@@ -86,9 +148,9 @@ class ResetPasswordScreen extends StatelessWidget {
             );
           },
         ),
-        
+
         SizedBox(height: isSmallScreen ? 20 : 30),
-        
+
         Text(
           'Nouveau mot de passe',
           style: TextStyle(
@@ -98,9 +160,9 @@ class ResetPasswordScreen extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        
+
         SizedBox(height: isSmallScreen ? 6 : 8),
-        
+
         Text(
           'Choisissez un mot de passe sécurisé pour votre compte.',
           style: TextStyle(
@@ -129,6 +191,7 @@ class ResetPasswordScreen extends StatelessWidget {
             ],
           ),
           child: TextField(
+            controller: _passwordController,
             obscureText: true,
             decoration: InputDecoration(
               labelText: 'Nouveau mot de passe',
@@ -181,6 +244,7 @@ class ResetPasswordScreen extends StatelessWidget {
             ],
           ),
           child: TextField(
+            controller: _confirmPasswordController,
             obscureText: true,
             decoration: InputDecoration(
               labelText: 'Confirmer le mot de passe',
@@ -231,14 +295,14 @@ class ResetPasswordScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
-            child: const Text('Enregistrer et se connecter'),
+            onPressed: _isLoading ? null : _onResetPassword,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
+                : const Text('Enregistrer et se connecter'),
           ),
         ),
       ],
