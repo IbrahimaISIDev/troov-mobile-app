@@ -4,7 +4,6 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_auth/error_codes.dart' as auth_error;
 import '../../utils/theme.dart';
 import '../../services/auth_service.dart';
-import '../home_screen.dart';
 
 class AppLockScreen extends StatefulWidget {
   final bool isLaunch;
@@ -19,7 +18,6 @@ class _AppLockScreenState extends State<AppLockScreen> {
   final AuthService _authService = AuthService();
   final LocalAuthentication auth = LocalAuthentication();
 
-  bool _isLoading = false;
   String _errorMessage = '';
   bool _canCheckBiometrics = false;
 
@@ -121,9 +119,6 @@ class _AppLockScreenState extends State<AppLockScreen> {
 
   Future<void> _verifyCode() async {
     final code = _digits.join();
-    setState(() {
-      _isLoading = true;
-    });
 
     try {
       final isValid = await _authService.verifyAppLockCode(code);
@@ -140,12 +135,6 @@ class _AppLockScreenState extends State<AppLockScreen> {
       if (mounted) {
         setState(() {
           _errorMessage = 'Erreur de vérification';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
         });
       }
     }

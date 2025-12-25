@@ -6,6 +6,8 @@ import 'my_shop_screen.dart';
 import 'my_sales_screen.dart';
 import 'my_purchases_screen.dart';
 import '../chat/chat_screen.dart';
+import '../../services/post_service.dart';
+import '../../models/post_model.dart';
 
 class MySpaceScreen extends StatefulWidget {
   const MySpaceScreen({Key? key}) : super(key: key);
@@ -17,10 +19,13 @@ class MySpaceScreen extends StatefulWidget {
 class _MySpaceScreenState extends State<MySpaceScreen> {
   bool _isSalesExpanded = false;
   bool _isPurchasesExpanded = false;
+  final PostService _postService = PostService();
+  late Future<List<Post>> _userPostsFuture;
 
   @override
   void initState() {
     super.initState();
+    _userPostsFuture = _postService.getUserPosts();
   }
 
   @override
@@ -42,7 +47,7 @@ class _MySpaceScreenState extends State<MySpaceScreen> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            const Text(
               'Mon espace',
               style: TextStyle(
                 color: Colors.black87,
@@ -183,7 +188,12 @@ class _MySpaceScreenState extends State<MySpaceScreen> {
               context,
               MaterialPageRoute(
                   builder: (context) => const PublishTroovScreen()),
-            );
+            ).then((_) {
+              // Refresh posts when returning
+              setState(() {
+                _userPostsFuture = _postService.getUserPosts();
+              });
+            });
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(
@@ -243,37 +253,65 @@ class _MySpaceScreenState extends State<MySpaceScreen> {
 
         const SizedBox(height: 10),
 
-        // Top 3 Views Row (Static, No Scroll)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Left (Rank 2)
-              _buildTopImageCard(
-                  'https://picsum.photos/200/300?random=101', // Lifestyle/Fashion
-                  rank: 2,
-                  height: 120,
-                  width: 100),
-              const SizedBox(width: 8),
-              // Center (Rank 1 - Largest)
-              _buildTopImageCard(
-                  'https://picsum.photos/200/300?random=202', // Tech/Product
-                  rank: 1,
-                  height: 160,
-                  width: 110,
-                  isCenter: true),
-              const SizedBox(width: 8),
-              // Right (Rank 3)
-              _buildTopImageCard(
-                  'https://picsum.photos/200/300?random=303', // Art/Decor
-                  rank: 3,
-                  height: 120,
-                  width: 100),
-            ],
-          ),
-        ),
+        // Top 3 Views Row (Specific posts)
+        FutureBuilder<List<Post>>(
+            future: _userPostsFuture,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox.shrink(); // Hide if no posts
+              }
+
+              final posts = snapshot.data!;
+              // Logic to show top 3 (for now just first 3)
+              final displayPosts = posts.take(3).toList();
+
+              // If less than 3, just center them. If 3, use the size logic.
+
+              List<Widget> children = [];
+
+              for (int i = 0; i < displayPosts.length; i++) {
+                final post = displayPosts[i];
+                // Rank 1 is the middle one visually in prev code, but let's just show them in order
+                // Or mimic the size difference:
+                // Index 1 (2nd item) was biggest in prev code? No, usually center is biggest.
+                // Let's simplified: just show up to 3 thumbnails.
+
+                double height = 120;
+                double width = 100;
+                bool isCenter = false;
+
+                if (displayPosts.length == 3 && i == 1) {
+                  height = 140;
+                  width = 110;
+                  isCenter = true;
+                }
+
+                final imageUrl = post.mediaUrls.isNotEmpty
+                    ? post.mediaUrls.first
+                    : 'https://via.placeholder.com/150';
+
+                children.add(_buildTopImageCard(imageUrl,
+                    rank: i + 1,
+                    height: height,
+                    width: width,
+                    isCenter: isCenter,
+                    likes: post.likeCount.toString(),
+                    comments: post.commentCount.toString()));
+
+                if (i < displayPosts.length - 1) {
+                  children.add(const SizedBox(width: 8));
+                }
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: children,
+                ),
+              );
+            }),
       ],
     );
   }
@@ -282,12 +320,9 @@ class _MySpaceScreenState extends State<MySpaceScreen> {
       {required int rank,
       required double height,
       required double width,
-      bool isCenter = false}) {
-    // Mock stats based on rank
-    String views = rank == 1 ? '1.2k' : (rank == 2 ? '850' : '640');
-    String likes = rank == 1 ? '340' : (rank == 2 ? '203' : '95');
-    String comments = rank == 1 ? '45' : (rank == 2 ? '25' : '8');
-
+      bool isCenter = false,
+      String likes = '0',
+      String comments = '0'}) {
     return Container(
       height: height,
       width: width,
@@ -317,12 +352,6 @@ class _MySpaceScreenState extends State<MySpaceScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.remove_red_eye_outlined, size: 10),
-              const SizedBox(width: 1),
-              Text(views,
-                  style: const TextStyle(
-                      fontSize: 8, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 4),
               const Icon(Icons.favorite_border, size: 10),
               const SizedBox(width: 1),
               Text(likes,
