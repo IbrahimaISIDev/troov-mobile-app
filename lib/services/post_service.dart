@@ -1,201 +1,138 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_service.dart';
 import '../models/post_model.dart';
+import 'auth_service.dart';
 
 class PostService {
-  final String baseUrl = AuthService.baseUrl;
+  // Replace with actual base URL or import from constants
+  // Replace with actual base URL or import from constants
+  static const String _baseUrl = AuthService.baseUrl;
 
-  Future<Map<String, String>> _getHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AuthService.tokenKey);
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
-
-  // Get Feed
   Future<List<Post>> getFeed({int page = 0, int size = 10}) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$_baseUrl/posts?page=$page&size=$size');
+
     try {
-      final headers = await _getHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/posts?page=$page&size=$size'),
-        headers: headers,
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> content = data['data']['content'];
-        return content.map((json) => Post.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load feed');
+        final Map<String, dynamic> body =
+            json.decode(utf8.decode(response.bodyBytes));
+        if (body['success'] == true && body['data'] != null) {
+          final List<dynamic> content = body['data']['content'];
+          return content.map((json) => Post.fromJson(json)).toList();
+        }
       }
+      return [];
     } catch (e) {
-      throw Exception('Error fetching feed: $e');
+      print('Error fetching feed: $e');
+      return [];
     }
   }
 
-  // Create Post
+  Future<List<Post>> getUserPosts() async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$_baseUrl/posts/my-posts');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body =
+            json.decode(utf8.decode(response.bodyBytes));
+        if (body['success'] == true && body['data'] != null) {
+          final List<dynamic> content = body['data'];
+          return content.map((json) => Post.fromJson(json)).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching user posts: $e');
+      return [];
+    }
+  }
+
   Future<Post> createPost({
     required String description,
     required List<String> mediaUrls,
     String? category,
   }) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$_baseUrl/posts');
+
     try {
-      final headers = await _getHeaders();
       final response = await http.post(
-        Uri.parse('$baseUrl/posts'),
-        headers: headers,
-        body: jsonEncode({
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
           'description': description,
           'mediaUrls': mediaUrls,
           'category': category,
         }),
       );
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return Post.fromJson(data['data']);
-      } else {
-        throw Exception('Failed to create post');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> body =
+            json.decode(utf8.decode(response.bodyBytes));
+        if (body['success'] == true && body['data'] != null) {
+          return Post.fromJson(body['data']);
+        }
       }
+      throw Exception('Failed to create post');
     } catch (e) {
-      throw Exception('Error creating post: $e');
+      print('Error creating post: $e');
+      rethrow;
     }
   }
 
-  // Get Single Post
-  Future<Post> getPostById(String postId) async {
+  Future<bool> toggleLike(String postId) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$_baseUrl/posts/$postId/like');
+
     try {
-      final headers = await _getHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/posts/$postId'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return Post.fromJson(data['data']);
-      } else {
-        throw Exception('Failed to load post');
-      }
-    } catch (e) {
-      throw Exception('Error fetching post: $e');
-    }
-  }
-
-  // Get User Posts
-  Future<List<Post>> getUserPosts(
-      {String? userId, int page = 0, int size = 10}) async {
-    try {
-      final headers = await _getHeaders();
-      final url = userId != null
-          ? '$baseUrl/posts/user/$userId?page=$page&size=$size'
-          : '$baseUrl/posts/user?page=$page&size=$size';
-
-      final response = await http.get(Uri.parse(url), headers: headers);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> content = data['data']['content'];
-        return content.map((json) => Post.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load user posts');
-      }
-    } catch (e) {
-      throw Exception('Error fetching user posts: $e');
-    }
-  }
-
-  // Toggle Like Post
-  Future<void> toggleLikePost(String postId) async {
-    try {
-      final headers = await _getHeaders();
       final response = await http.post(
-        Uri.parse('$baseUrl/posts/$postId/like'),
-        headers: headers,
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to toggle like');
-      }
+      return response.statusCode == 200;
     } catch (e) {
-      throw Exception('Error liking post: $e');
+      print('Error toggling like: $e');
+      return false;
     }
   }
 
-  // Get Comments
-  Future<List<Comment>> getComments(String postId,
-      {int page = 0, int size = 20}) async {
+  Future<void> viewPost(String postId) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$_baseUrl/posts/$postId/view');
+
     try {
-      final headers = await _getHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/posts/$postId/comments?page=$page&size=$size'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> content = data['data']['content'];
-        return content.map((json) => Comment.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load comments');
-      }
-    } catch (e) {
-      throw Exception('Error fetching comments: $e');
-    }
-  }
-
-  // Add Comment
-  Future<Comment> addComment(String postId, String content) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/posts/$postId/comments'),
-        headers: headers,
-        body: jsonEncode({'content': content}),
-      );
-
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return Comment.fromJson(data['data']);
-      } else {
-        throw Exception('Failed to add comment');
-      }
-    } catch (e) {
-      throw Exception('Error adding comment: $e');
-    }
-  }
-
-  // Toggle Like Comment
-  Future<void> toggleLikeComment(String commentId) async {
-    try {
-      final headers = await _getHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/posts/comments/$commentId/like'),
-        headers: headers,
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to toggle comment like');
-      }
-    } catch (e) {
-      throw Exception('Error liking comment: $e');
-    }
-  }
-
-  // Increment View Count
-  Future<void> incrementViewCount(String postId) async {
-    try {
-      final headers = await _getHeaders();
       await http.post(
-        Uri.parse('$baseUrl/posts/$postId/view'),
-        headers: headers,
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
     } catch (e) {
-      print('Error incrementing view count: $e');
+      print('Error viewing post: $e');
     }
   }
 }

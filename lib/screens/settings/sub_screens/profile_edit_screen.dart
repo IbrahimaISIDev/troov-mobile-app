@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
-import '../../../models/user.dart';
 import '../../../utils/theme.dart';
 
 class ProfileEditScreen extends StatefulWidget {

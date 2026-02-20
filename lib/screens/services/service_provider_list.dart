@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 import '../../utils/theme.dart';
+import '../../services/story_service.dart';
+import '../../widgets/story_status_avatar.dart';
 
 class ServiceProviderList extends StatefulWidget {
   final ServiceCategory category;
@@ -27,6 +29,7 @@ class ServiceProviderList extends StatefulWidget {
 class _ServiceProviderListState extends State<ServiceProviderList> {
   late TextEditingController _searchController;
   String _sortBy = 'distance';
+  final StoryService _storyService = StoryService();
 
   @override
   void initState() {
@@ -59,7 +62,8 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
                       padding: EdgeInsets.all(screenWidth * 0.04),
                       itemCount: sortedProviders.length,
                       itemBuilder: (context, index) {
-                        return _buildProviderCard(sortedProviders[index], screenWidth);
+                        return _buildProviderCard(
+                            sortedProviders[index], screenWidth);
                       },
                     ),
             ),
@@ -208,7 +212,8 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
                   value: 'distance',
                   child: Row(
                     children: [
-                      Icon(Icons.location_on_rounded, size: screenWidth < 600 ? 16 : 18),
+                      Icon(Icons.location_on_rounded,
+                          size: screenWidth < 600 ? 16 : 18),
                       SizedBox(width: 8),
                       Text(
                         'Distance',
@@ -221,7 +226,8 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
                   value: 'rating',
                   child: Row(
                     children: [
-                      Icon(Icons.star_rounded, size: screenWidth < 600 ? 16 : 18),
+                      Icon(Icons.star_rounded,
+                          size: screenWidth < 600 ? 16 : 18),
                       SizedBox(width: 8),
                       Text(
                         'Note',
@@ -234,7 +240,8 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
                   value: 'price',
                   child: Row(
                     children: [
-                      Icon(Icons.attach_money_rounded, size: screenWidth < 600 ? 16 : 18),
+                      Icon(Icons.attach_money_rounded,
+                          size: screenWidth < 600 ? 16 : 18),
                       SizedBox(width: 8),
                       Text(
                         'Prix',
@@ -279,26 +286,32 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  StoryStatusAvatar(
+                    hasStory: _storyService.hasStories(provider.id),
+                    isRead: !_storyService.hasUnreadStories(provider.id),
                     radius: screenWidth < 600 ? 25 : 30,
-                    backgroundColor: Colors.grey.shade200,
-                    child: ClipOval(
-                      child: Image.asset(
-                        provider.profileImage ?? 'assets/images/burger.png',
-                        fit: BoxFit.cover,
-                        width: screenWidth < 600 ? 50 : 60,
-                        height: screenWidth < 600 ? 50 : 60,
-                        errorBuilder: (context, error, stackTrace) {
-                          print("Erreur de chargement de l'image de profil: $error");
-                          return Container(
-                            color: Colors.grey.shade200,
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.grey.shade400,
-                              size: screenWidth < 600 ? 25 : 30,
-                            ),
-                          );
-                        },
+                    child: CircleAvatar(
+                      radius: screenWidth < 600 ? 25 : 30,
+                      backgroundColor: Colors.grey.shade200,
+                      child: ClipOval(
+                        child: Image.asset(
+                          provider.profileImage ?? 'assets/images/burger.png',
+                          fit: BoxFit.cover,
+                          width: screenWidth < 600 ? 50 : 60,
+                          height: screenWidth < 600 ? 50 : 60,
+                          errorBuilder: (context, error, stackTrace) {
+                            print(
+                                "Erreur de chargement de l'image de profil: $error");
+                            return Container(
+                              color: Colors.grey.shade200,
+                              child: Icon(
+                                Icons.person,
+                                color: Colors.grey.shade400,
+                                size: screenWidth < 600 ? 25 : 30,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -357,7 +370,8 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
                         Wrap(
                           spacing: 4,
                           runSpacing: 4,
-                          children: provider.specialties.take(2).map((specialty) {
+                          children:
+                              provider.specialties.take(2).map((specialty) {
                             return Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -535,9 +549,12 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
 
     if (widget.searchQuery.isNotEmpty) {
       filtered = filtered.where((provider) {
-        return provider.name.toLowerCase().contains(widget.searchQuery.toLowerCase()) ||
-               provider.specialties.any((specialty) =>
-                   specialty.toLowerCase().contains(widget.searchQuery.toLowerCase()));
+        return provider.name
+                .toLowerCase()
+                .contains(widget.searchQuery.toLowerCase()) ||
+            provider.specialties.any((specialty) => specialty
+                .toLowerCase()
+                .contains(widget.searchQuery.toLowerCase()));
       }).toList();
     }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'history_detail_screen.dart';
 import '../../services/transfer_service.dart';
 import '../../services/auth_service.dart';
+import '../../models/transfer_model.dart'; // Import the model
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -14,7 +15,8 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final TransferService _transferService = TransferService();
   final AuthService _authService = AuthService();
-  List<dynamic> _historyTransfers = [];
+  List<TransferTransaction> _historyTransfers =
+      []; // Change type to List<TransferTransaction>
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -97,18 +99,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               final transfer = _historyTransfers[index];
 
                               final service =
-                                  transfer['service'] ?? 'Transfert';
-                              // Fallback logic closely matching backend DTO structure
-                              final receiverName = transfer['recipientName'] ??
-                                  transfer['senderName'] ??
-                                  'Inconnu';
-                              final receiverPhone =
-                                  transfer['recipientPhone'] ??
-                                      transfer['phone'] ??
-                                      '';
-                              final amountRaw = transfer['amount'].toString();
-                              final date = transfer['date'] ?? 'Récemment';
-                              final reference = transfer['id'] ?? 'TRX-REF';
+                                  transfer.method.toString().split('.').last;
+                              final receiverName = transfer.recipientName;
+                              final receiverPhone = transfer.recipientPhone;
+                              final amountRaw =
+                                  transfer.amount.toStringAsFixed(0);
+                              final date = transfer.createdAt;
+                              final reference =
+                                  transfer.referenceNumber ?? 'TRX-REF';
 
                               return GestureDetector(
                                 onTap: () {

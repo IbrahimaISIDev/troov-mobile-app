@@ -298,7 +298,7 @@ class _OtpCodeScreenState extends State<OtpCodeScreen> {
             border: Border.all(
               color: value.isNotEmpty
                   ? AppTheme.primaryBlue
-                  : Colors.grey.shade300!,
+                  : Colors.grey.shade300,
               width: value.isNotEmpty ? 2 : 1,
             ),
           ),

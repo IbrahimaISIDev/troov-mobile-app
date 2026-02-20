@@ -31,6 +31,8 @@ class User {
     this.preferences,
     this.paymentMethods,
     this.languages = const ['fr'],
+    this.accountType = AccountType.essential,
+    this.subscriptionStatus = SubscriptionStatus.active,
   });
 
   String get fullName => '$firstName $lastName';
@@ -65,6 +67,14 @@ class User {
           ? List<String>.from(json['paymentMethods'])
           : [],
       languages: List<String>.from(json['languages'] ?? ['fr']),
+      accountType: AccountType.values.firstWhere(
+        (e) => e.toString().split('.').last == json['accountType'],
+        orElse: () => AccountType.essential,
+      ),
+      subscriptionStatus: SubscriptionStatus.values.firstWhere(
+        (e) => e.toString().split('.').last == json['subscriptionStatus'],
+        orElse: () => SubscriptionStatus.active,
+      ),
     );
   }
 
@@ -84,11 +94,21 @@ class User {
       'preferences': preferences,
       'paymentMethods': paymentMethods,
       'languages': languages,
+      'accountType': accountType.toString().split('.').last,
+      'subscriptionStatus': subscriptionStatus.toString().split('.').last,
     };
   }
+
+  // New fields
+  final AccountType accountType;
+  final SubscriptionStatus subscriptionStatus;
 }
 
 enum UserRole { client, provider }
+
+enum AccountType { essential, pro, business }
+
+enum SubscriptionStatus { active, inactive, past_due }
 
 enum ServiceCategory {
   cleaning,

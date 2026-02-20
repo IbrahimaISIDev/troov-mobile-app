@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../utils/theme.dart';
 import '../../../services/auth_service.dart';
 import '../../../models/user.dart';
+import '../../../services/story_service.dart';
+import '../../../widgets/story_status_avatar.dart';
 
 class HomeTabHeader extends StatefulWidget {
   final VoidCallback onNotificationsTap;
@@ -28,6 +30,9 @@ class HomeTabHeader extends StatefulWidget {
 class _HomeTabHeaderState extends State<HomeTabHeader> {
   User? _currentUser;
   final AuthService _authService = AuthService();
+  final StoryService _storyService = StoryService();
+  bool _hasStory = false;
+  bool _hasUnreadStory = false;
 
   @override
   void initState() {
@@ -37,9 +42,19 @@ class _HomeTabHeaderState extends State<HomeTabHeader> {
 
   Future<void> _loadUser() async {
     final user = await _authService.getCurrentUser();
+    bool hasStory = false;
+    bool hasUnread = false;
+
+    if (user != null) {
+      hasStory = _storyService.hasStories(user.id);
+      hasUnread = _storyService.hasUnreadStories(user.id);
+    }
+
     if (mounted) {
       setState(() {
         _currentUser = user;
+        _hasStory = hasStory;
+        _hasUnreadStory = hasUnread;
       });
     }
   }
@@ -200,7 +215,7 @@ class _HomeTabHeaderState extends State<HomeTabHeader> {
                       dense: true,
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(Icons.storefront_rounded, size: 20),
-                      title: Text('Ma boutique'),
+                      title: Text('Mon Espace'),
                     ),
                   ),
                   PopupMenuItem(
@@ -246,14 +261,14 @@ class _HomeTabHeaderState extends State<HomeTabHeader> {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      StoryStatusAvatar(
                         radius: screenWidth < 600 ? 14 : 16,
-                        backgroundColor: Colors.grey.shade200,
-                        backgroundImage: (_currentUser?.profileImage != null &&
+                        imageUrl: (_currentUser?.profileImage != null &&
                                 _currentUser!.profileImage!.isNotEmpty)
-                            ? NetworkImage(_currentUser!.profileImage!)
-                            : const AssetImage('assets/images/profile.png')
-                                as ImageProvider,
+                            ? _currentUser!.profileImage!
+                            : 'assets/images/profile.png',
+                        hasStory: _hasStory,
+                        isRead: !_hasUnreadStory,
                       ),
                       SizedBox(width: screenWidth * 0.01),
                       Icon(

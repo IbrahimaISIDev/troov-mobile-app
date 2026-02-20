@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 import '../../utils/theme.dart';
 import '../chat/chat_detail_screen.dart';
+import '../../widgets/story_status_avatar.dart';
+import '../../services/story_service.dart';
+import '../home/story_view_screen.dart';
 
 class ServiceProviderDetail extends StatefulWidget {
   final ServiceProvider provider;
@@ -114,50 +117,70 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(height: availableHeight * 0.1),
-                  CircleAvatar(
+                  StoryStatusAvatar(
                     radius: screenWidth < 600 ? 40 : 50,
-                    backgroundColor: Colors.white,
+                    hasStory: StoryService().hasStories(widget.provider.id),
+                    isRead:
+                        !StoryService().hasUnreadStories(widget.provider.id),
+                    onTap: () {
+                      if (StoryService().hasStories(widget.provider.id)) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StoryViewScreen(
+                              initialIndex: 0,
+                              stories: StoryService()
+                                  .getUserStories(widget.provider.id),
+                            ),
+                          ),
+                        );
+                      }
+                    },
                     child: CircleAvatar(
-                      radius: screenWidth < 600 ? 36 : 46,
-                      backgroundColor: Colors.grey.shade200,
-                      child: ClipOval(
-                        child: (widget.provider.profileImage ?? '')
-                                .startsWith('http')
-                            ? Image.network(
-                                widget.provider.profileImage!,
-                                fit: BoxFit.cover,
-                                width: screenWidth < 600 ? 72 : 92,
-                                height: screenWidth < 600 ? 72 : 92,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: Colors.grey.shade200,
-                                    child: Icon(
-                                      Icons.person,
-                                      size: screenWidth < 600 ? 40 : 50,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  );
-                                },
-                              )
-                            : Image.asset(
-                                widget.provider.profileImage ??
-                                    'assets/images/burger.png',
-                                fit: BoxFit.cover,
-                                width: screenWidth < 600 ? 72 : 92,
-                                height: screenWidth < 600 ? 72 : 92,
-                                errorBuilder: (context, error, stackTrace) {
-                                  print(
-                                      "Erreur de chargement de l'image de profil: $error");
-                                  return Container(
-                                    color: Colors.grey.shade200,
-                                    child: Icon(
-                                      Icons.person,
-                                      size: screenWidth < 600 ? 40 : 50,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  );
-                                },
-                              ),
+                      radius: screenWidth < 600 ? 40 : 50,
+                      backgroundColor: Colors.white,
+                      child: CircleAvatar(
+                        radius: screenWidth < 600 ? 36 : 46,
+                        backgroundColor: Colors.grey.shade200,
+                        child: ClipOval(
+                          child: (widget.provider.profileImage ?? '')
+                                  .startsWith('http')
+                              ? Image.network(
+                                  widget.provider.profileImage!,
+                                  fit: BoxFit.cover,
+                                  width: screenWidth < 600 ? 72 : 92,
+                                  height: screenWidth < 600 ? 72 : 92,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey.shade200,
+                                      child: Icon(
+                                        Icons.person,
+                                        size: screenWidth < 600 ? 40 : 50,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Image.asset(
+                                  widget.provider.profileImage ??
+                                      'assets/images/burger.png',
+                                  fit: BoxFit.cover,
+                                  width: screenWidth < 600 ? 72 : 92,
+                                  height: screenWidth < 600 ? 72 : 92,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    print(
+                                        "Erreur de chargement de l'image de profil: $error");
+                                    return Container(
+                                      color: Colors.grey.shade200,
+                                      child: Icon(
+                                        Icons.person,
+                                        size: screenWidth < 600 ? 40 : 50,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
                       ),
                     ),
                   ),
@@ -357,33 +380,42 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
             ),
           ),
           SizedBox(height: screenWidth * 0.03),
-          Flexible(
-            child: Text(
-              widget.provider.description,
-              style: TextStyle(
-                fontSize: fontSize - 0,
-                color: Colors.grey.shade600,
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.provider.description,
+                    style: TextStyle(
+                      fontSize: fontSize - 0,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  SizedBox(height: screenWidth * 0.04),
+                  _buildInfoRow(Icons.phone, widget.provider.phone,
+                      screenWidth: screenWidth),
+                  _buildInfoRow(Icons.location_city, widget.provider.address,
+                      screenWidth: screenWidth),
+                  _buildInfoRow(Icons.access_time,
+                      'Temps de réponse: ${widget.provider.responseTime}',
+                      screenWidth: screenWidth),
+                  _buildInfoRow(Icons.monetization_on,
+                      'Tarif: ${widget.provider.hourlyRate} FCFA/h',
+                      screenWidth: screenWidth),
+                  _buildInfoRow(
+                    Icons.check_circle,
+                    widget.provider.availability
+                        ? 'Disponible'
+                        : 'Non disponible',
+                    color: widget.provider.availability
+                        ? Colors.green
+                        : Colors.red,
+                    screenWidth: screenWidth,
+                  ),
+                ],
               ),
-              maxLines: 10,
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          SizedBox(height: screenWidth * 0.04),
-          _buildInfoRow(Icons.phone, widget.provider.phone,
-              screenWidth: screenWidth),
-          _buildInfoRow(Icons.location_city, widget.provider.address,
-              screenWidth: screenWidth),
-          _buildInfoRow(Icons.access_time,
-              'Temps de réponse: ${widget.provider.responseTime}',
-              screenWidth: screenWidth),
-          _buildInfoRow(Icons.monetization_on,
-              'Tarif: ${widget.provider.hourlyRate} FCFA/h',
-              screenWidth: screenWidth),
-          _buildInfoRow(
-            Icons.check_circle,
-            widget.provider.availability ? 'Disponible' : 'Non disponible',
-            color: widget.provider.availability ? Colors.green : Colors.red,
-            screenWidth: screenWidth,
           ),
         ],
       ),

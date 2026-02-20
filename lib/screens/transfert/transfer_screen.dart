@@ -7,6 +7,7 @@ import '../history/history_screen.dart';
 import '../../services/transfer_service.dart';
 import '../../services/auth_service.dart';
 import '../../models/user.dart';
+import '../../models/transfer_model.dart';
 
 class TransferScreen extends StatefulWidget {
   const TransferScreen({Key? key}) : super(key: key);
@@ -169,17 +170,18 @@ class _TransferScreenState extends State<TransferScreen> {
         ? await _authService.refreshUser()
         : await _authService.getCurrentUser();
     print('DEBUG: Loaded User: $user (ForceRefresh: $forceRefresh)');
-    if (user != null) {
-      print('DEBUG: User Balance: ${user.balance}');
-    } else {
-      print('DEBUG: User is NULL');
-    }
+
     if (mounted) {
       setState(() {
         _currentUser = user;
       });
       if (user != null) {
         _fetchHistory(user.id);
+      } else {
+        // User is null, stop history loading
+        setState(() {
+          _isLoadingHistory = false;
+        });
       }
     }
   }
@@ -187,74 +189,97 @@ class _TransferScreenState extends State<TransferScreen> {
   Future<void> _fetchHistory(String userId) async {
     try {
       final history = await _transferService.getTransactionHistory(userId);
-      setState(() {
-        _recentTransfers = history;
-        _isLoadingHistory = false;
-      });
+      if (mounted) {
+        setState(() {
+          _recentTransfers = history;
+          _isLoadingHistory = false;
+        });
+      }
     } catch (e) {
       print('Error loading history: $e');
-      setState(() {
-        _isLoadingHistory = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingHistory = false;
+        });
+      }
     }
   }
 
   Future<void> _loadCountries() async {
+    print('DEBUG: _loadCountries called');
     try {
       final countries = await _transferService.getCountries();
-      setState(() {
-        _countries = countries;
-        if (_countries.isNotEmpty) {
-          // Default to Senegal or first
-          final senegal = _countries.firstWhere((c) => c['code'] == 'SN',
-              orElse: () => _countries.first);
-          _selectCountry(senegal);
-        }
-      });
+      print('DEBUG: Countries loaded: ${countries.length}');
+      if (mounted) {
+        setState(() {
+          _countries = countries;
+          if (_countries.isNotEmpty) {
+            final senegal = _countries.firstWhere((c) => c['code'] == 'SN',
+                orElse: () => _countries.first as Map<String, dynamic>);
+            print('DEBUG: Selecting country: ${senegal['name']}');
+            _selectCountry(senegal);
+          } else {
+            print('DEBUG: No countries found');
+            _isLoadingOperators = false; // Stop spinner if no countries
+          }
+        });
+      }
     } catch (e) {
-      print('Error loading countries: $e');
+      print('DEBUG: Error loading countries: $e');
+      if (mounted) setState(() => _isLoadingOperators = false);
     }
   }
 
   void _selectCountry(dynamic country) {
+    print('DEBUG: _selectCountry: ${country['code']}');
     setState(() {
       _selectedCountryCode = country['code'];
       _selectedCallingCode = country['callingCode'] ?? '';
       _selectedCurrency = country['currency'] ?? '';
 
-      // Update phone prefix if empty or just contains old prefix
       if (_phoneController.text.isEmpty) {
         _phoneController.text = _selectedCallingCode;
       }
     });
-    _loadOperators();
-    _calculateFees(); // Recalculate if country changes
+    _loadOperators(); // Load operators IS called here
+    _calculateFees();
   }
 
   Future<void> _loadOperators() async {
-    if (_selectedCountryCode == null) return;
+    print('DEBUG: _loadOperators called. Country: $_selectedCountryCode');
+    if (_selectedCountryCode == null) {
+      print('DEBUG: _selectedCountryCode is null, returning.');
+      return;
+    }
 
     setState(() {
       _isLoadingOperators = true;
     });
 
     try {
-      final operators =
-          await _transferService.getOperators(country: _selectedCountryCode);
-      setState(() {
-        _transferServices = operators;
-        _isLoadingOperators = false;
-        if (_transferServices.isNotEmpty) {
-          _selectedService = _transferServices[0]['name'];
-          _selectedOperator = _transferServices[0];
-          _calculateFees();
-        }
-      });
+      print('DEBUG: Fetching operators from service...');
+      final operators = await _transferService.getOperators(
+          country: _selectedCountryCode ?? 'SN');
+      print('DEBUG: Operators loaded: ${operators.length}');
+
+      if (mounted) {
+        setState(() {
+          _transferServices = operators;
+          _isLoadingOperators = false;
+          if (_transferServices.isNotEmpty) {
+            _selectedService = _transferServices[0]['name'];
+            _selectedOperator = _transferServices[0];
+            _calculateFees();
+          }
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoadingOperators = false;
-      });
-      print('Error loading operators: $e');
+      print('DEBUG: Error loading operators: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingOperators = false;
+        });
+      }
     }
   }
 
@@ -442,7 +467,8 @@ class _TransferScreenState extends State<TransferScreen> {
                                 itemBuilder: (context, index) {
                                   final service = _transferServices[index];
                                   final name = service['name'];
-                                  final logoUrl = service['logoUrl'];
+                                  final logoUrl =
+                                      service['logoUrl'] ?? service['logo'];
                                   final isSelected = _selectedService == name;
 
                                   return GestureDetector(
@@ -774,8 +800,8 @@ class _TransferScreenState extends State<TransferScreen> {
                     ..._recentTransfers
                         .asMap()
                         .entries
-                        .map((entry) =>
-                            _buildTransferItem(entry.value, entry.key))
+                        .map((entry) => _buildTransferItem(
+                            entry.value as TransferTransaction, entry.key))
                         .toList(),
                 ],
               ),
@@ -858,161 +884,90 @@ class _TransferScreenState extends State<TransferScreen> {
     );
   }
 
-  Widget _buildTransferItem(dynamic transfer, int index) {
-    if (transfer == null) return SizedBox.shrink();
-
-    // Determine type
-    String type =
-        transfer['type'] ?? 'TRANSFER'; // DEPOSIT, WITHDRAWAL, TRANSFER
-
-    // Extract Amount
-    double amount = 0.0;
-    if (transfer['amount'] is num) {
-      amount = (transfer['amount'] as num).toDouble();
-    } else if (transfer['amount'] is String) {
-      amount = double.tryParse(transfer['amount']) ?? 0.0;
-    }
-    String currency = transfer['currency'] ?? 'FCFA';
-
-    // Formatting based on Type
-    String title; // Main text (Recharge, or Recipient Name)
-    String subtitle; // Phone or Operator
-    Color amountColor;
-    String amountPrefix;
-    String operatorName = 'Service';
-
-    // Extract logic
-    if (transfer['paymentOperator'] != null &&
-        transfer['paymentOperator'] is Map) {
-      operatorName = transfer['paymentOperator']['name'] ?? 'Service';
-    } else if (transfer['service'] != null) {
-      operatorName = transfer['service'];
-    }
-
-    String recipientName =
-        transfer['recipientName'] ?? transfer['name'] ?? 'Inconnu';
-    String phone = transfer['recipientPhone'] ?? transfer['phone'] ?? '';
-
-    if (type == 'DEPOSIT') {
-      title = 'Recharge';
-      subtitle = '$operatorName • $phone';
-      amountColor = Colors.green;
-      amountPrefix = '+';
-    } else if (type == 'WITHDRAWAL') {
-      title = 'Retrait';
-      subtitle = '$operatorName • $phone';
-      amountColor = Colors.red;
-      amountPrefix = '-';
-    } else {
-      // TRANSFER
-      title = recipientName;
-      subtitle = '$phone • $operatorName';
-      amountColor = Colors.red;
-      amountPrefix = '-';
-    }
-
-    String displayLetter = title.isNotEmpty ? title[0].toUpperCase() : '?';
-
-    // Safely extract date
-    String dateStr = transfer['date'] is String
-        ? transfer['date']
-        : DateTime.now().toString().split(' ')[0];
-
-    // Truncate time if present
-    if (dateStr.contains('T')) {
-      dateStr = dateStr.split('T')[0];
-    }
-
-    return GestureDetector(
-      onTap: () {
-        // Optional: Show details
-      },
-      child: Container(
-        margin: EdgeInsets.only(bottom: 10),
-        padding: EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 5,
-              offset: Offset(0, 2),
+  Widget _buildTransferItem(TransferTransaction item, int index) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 15),
+      padding: EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: item.status == TransferStatus.completed
+                  ? Colors.green.withOpacity(0.1)
+                  : Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: type == 'DEPOSIT'
-                    ? Icon(Icons.arrow_downward,
-                        color: Colors.green) // Icon for Deposit
-                    : type == 'WITHDRAWAL'
-                        ? Icon(Icons.arrow_upward,
-                            color: Colors.red) // Icon for Withdrawal
-                        : Text(
-                            // Initials for Transfer
-                            displayLetter,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryBlue,
-                            ),
-                          ),
-              ),
+            child: Icon(
+              item.status == TransferStatus.completed
+                  ? Icons.check
+                  : Icons.access_time,
+              color: item.status == TransferStatus.completed
+                  ? Colors.green
+                  : Colors.orange,
+              size: 20,
             ),
-            SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+          ),
+          SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$amountPrefix${amount.toStringAsFixed(0)} $currency',
+                  item.recipientName,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: amountColor,
+                    color: Colors.black87,
                   ),
                 ),
+                SizedBox(height: 4),
                 Text(
-                  dateStr,
+                  '${item.createdAt.day}/${item.createdAt.month}/${item.createdAt.year} • ${item.method.toString().split('.').last}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: Colors.grey.shade500,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '-${item.amount.toStringAsFixed(0)} FCFA',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade400,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                item.status == TransferStatus.completed ? 'Succès' : 'En cours',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: item.status == TransferStatus.completed
+                      ? Colors.green
+                      : Colors.orange,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1394,6 +1349,8 @@ class _TransferScreenState extends State<TransferScreen> {
         amount: amount,
         serviceSlug: _selectedOperator['slug'] ?? 'unknown', // Pass slug
         userId: _currentUser!.id,
+        senderId: _currentUser!.id,
+        method: TransferMethod.mobile_money,
       );
 
       Navigator.pop(context); // Close loading

@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.1.36:8081/api';
+  static const String baseUrl = 'http://10.94.86.118:8081/api';
   static const String tokenKey = 'auth_token';
-  static const String refreshTokenKey = 'refresh_token';
+  // refreshTokenKey removed
   static const String userKey = 'user_data';
 
   // Connexion
@@ -23,12 +23,12 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final accessToken = data['data']['accessToken'];
-        final refreshToken = data['data']['refreshToken'];
+        // refreshToken removed
 
         // Sauvegarder les tokens
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(tokenKey, accessToken);
-        await prefs.setString(refreshTokenKey, refreshToken);
+        // refreshTokenKey storage removed
 
         // Récupérer les informations de l'utilisateur
         final userResponse = await http.get(
@@ -235,7 +235,7 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final accessToken = prefs.getString(tokenKey);
-      final refreshToken = prefs.getString(refreshTokenKey);
+      // refreshToken retrieval removed
 
       if (accessToken != null) {
         await http.post(
@@ -245,8 +245,7 @@ class AuthService {
             'Authorization':
                 'Bearer $accessToken' // Needed for security if backend requires it
           },
-          body: jsonEncode(
-              {'accessToken': accessToken, 'refreshToken': refreshToken ?? ''}),
+          body: jsonEncode({'accessToken': accessToken}),
         );
       }
     } catch (e) {
@@ -255,7 +254,7 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(tokenKey);
       await prefs.remove(userKey);
-      await prefs.remove(refreshTokenKey);
+      // refreshTokenKey removal removed
       print('DEBUG: Local tokens cleared.');
     }
   }
@@ -496,13 +495,13 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final tokens = data['data']; // JwtResponse {accessToken, refreshToken}
+        final tokens = data['data']; // JwtResponse {accessToken}
         final accessToken = tokens['accessToken'];
 
         // Sauvegarder les tokens
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(tokenKey, accessToken);
-        await prefs.setString(refreshTokenKey, tokens['refreshToken']);
+        // refreshTokenKey storage removed
 
         // Récupérer le profil utilisateur pour compléter la session
         await _fetchAndSaveUserProfile(accessToken);
@@ -588,56 +587,7 @@ class AuthService {
 
   // --- Gestion des Tokens et Requêtes Authentifiées ---
 
-  Future<void> _saveTokens(String accessToken, String refreshToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(tokenKey, accessToken);
-    await prefs.setString(refreshTokenKey, refreshToken);
-  }
-
-  Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(refreshTokenKey);
-  }
-
-  // Tentative de rafraîchissement du token
-  Future<bool> tryRefreshToken() async {
-    try {
-      final refreshToken = await getRefreshToken();
-      if (refreshToken == null) {
-        print('DEBUG: No refresh token found. Logging out.');
-        await logout();
-        return false;
-      }
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/refresh'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $refreshToken',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final newAccessToken = data['data']['accessToken'];
-        final newRefreshToken = data['data']['refreshToken'];
-
-        await _saveTokens(newAccessToken, newRefreshToken);
-        print('DEBUG: Token refreshed successfully');
-        return true;
-      } else {
-        print(
-            'DEBUG: Failed to refresh token (Status ${response.statusCode}). Login required.');
-        await logout(); // Session expirée définitivement
-        return false;
-      }
-    } catch (e) {
-      print('DEBUG: Error refreshing token: $e');
-      // En cas d'erreur réseau, on ne déconnecte pas forcément tout de suite,
-      // mais le retry échouera.
-      return false;
-    }
-  }
+  // Refresh token management removed
 
   // Helper pour les requêtes authentifiées avec retry
   Future<http.Response> _authenticatedRequest(String method, String url,
@@ -647,17 +597,8 @@ class AuthService {
     // 1ere tentative
     var response = await _sendRequest(method, url, token, body);
 
-    // Si 401 (Unauthorized), on tente de refresh le token
-    if (response.statusCode == 401) {
-      print('DEBUG: 401 Unauthorized. Attempting to refresh token...');
-      final refreshSuccess = await tryRefreshToken();
-
-      if (refreshSuccess) {
-        // Nouvelle tentative avec le nouveau token
-        token = await getToken();
-        response = await _sendRequest(method, url, token, body);
-      }
-    }
+    // Si 401 (Unauthorized), c'est une erreur d'authentification définitive
+    // On pourrait logout() ici si on veut forcer la déconnexion immédiate
 
     return response;
   }

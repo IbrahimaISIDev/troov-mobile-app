@@ -4,7 +4,6 @@ import '../services/auth_service.dart';
 import 'home/home_tab_screen.dart';
 import 'transfert/transfer_screen.dart';
 import 'services/services_screen.dart';
-import 'chat/chat_screen.dart';
 import 'settings/settings_screen.dart';
 import 'welcome_screen.dart';
 import 'troov/troov_screen.dart';
@@ -80,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
             isDarkMode: widget.isDarkMode,
           ),
           TransferScreen(),
-          TroovScreen(),
+          TroovScreen(isActive: _currentIndex == 2),
           ServicesScreen(),
           SettingsScreen(
             onThemeToggle: widget.onThemeToggle,

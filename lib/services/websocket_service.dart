@@ -26,10 +26,10 @@ class WebSocketService {
     if (_client != null && _client!.isActive) return;
 
     // Use ws:// for unencrypted local connection, matching http port 8081
-    // Note: Emulator uses 10.0.2.2, Physical device uses 192.168.1.36
+    // Note: Emulator uses 10.0.2.2, Physical device uses 10.94.86.118
     // We'll reuse the host from AuthService but change protocol and port/path
-    // AuthService.baseUrl is 'http://192.168.1.36:8081/api'
-    // WS URL should be 'ws://192.168.1.36:8081/ws-troov'
+    // AuthService.baseUrl is 'http://10.94.86.118:8081/api'
+    // WS URL should be 'ws://10.94.86.118:8081/ws-troov'
 
     final wsUrl = AuthService.baseUrl
         .replaceFirst('http', 'ws')
