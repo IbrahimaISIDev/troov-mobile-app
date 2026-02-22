@@ -6,10 +6,12 @@ import './popular_services.dart';
 import './service_provider_list.dart';
 import './service_provider_detail.dart';
 import '../../models/service_model.dart';
-import '../chat/chat_screen.dart';
 
 class ServicesScreen extends StatefulWidget {
-  const ServicesScreen({super.key});
+  final ServiceCategory? initialCategory;
+  final Function(bool)? onHideBottomBar;
+
+  const ServicesScreen({super.key, this.initialCategory, this.onHideBottomBar});
 
   @override
   State<ServicesScreen> createState() => _ServicesScreenState();
@@ -26,26 +28,48 @@ class _ServicesScreenState extends State<ServicesScreen> {
   bool _showProviderDetail = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.initialCategory != null) {
+      _selectedCategory = widget.initialCategory;
+      _filteredProviders = _getProvidersForCategory(widget.initialCategory!);
+      _showProvidersList = true;
+    }
+  }
+
+  @override
+  void didUpdateWidget(ServicesScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCategory != oldWidget.initialCategory) {
+      if (widget.initialCategory != null) {
+        setState(() {
+          _selectedCategory = widget.initialCategory;
+          _filteredProviders =
+              _getProvidersForCategory(widget.initialCategory!);
+          _showProvidersList = true;
+          _showProviderDetail = false;
+        });
+      } else {
+        setState(() {
+          _selectedCategory = null;
+          _showProvidersList = false;
+          _showProviderDetail = false;
+        });
+        widget.onHideBottomBar?.call(false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
+        bottom: false,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           child: _buildCurrentView(),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.primaryBlue,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ChatScreen(showBack: true),
-            ),
-          );
-        },
-        child: const Icon(Icons.chat_rounded, color: Colors.white),
       ),
     );
   }
@@ -59,6 +83,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             _showProviderDetail = false;
             _selectedProvider = null;
           });
+          widget.onHideBottomBar?.call(false);
         },
       );
     }
@@ -79,6 +104,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             _selectedProvider = provider;
             _showProviderDetail = true;
           });
+          widget.onHideBottomBar?.call(true);
         },
         searchQuery: _searchQuery,
         onSearchChanged: (query) {
@@ -134,6 +160,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
               _selectServiceCategory(category);
             },
           ),
+        ),
+
+        // Espace pour la navigation
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 100),
         ),
       ],
     );
@@ -267,8 +298,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
     final allProviders = _getAllProviders();
     final filtered = allProviders.where((provider) {
       return provider.name.toLowerCase().contains(query.toLowerCase()) ||
-             provider.specialties.any((specialty) => 
-                specialty.toLowerCase().contains(query.toLowerCase()));
+          provider.specialties.any((specialty) =>
+              specialty.toLowerCase().contains(query.toLowerCase()));
     }).toList();
 
     setState(() {
@@ -285,15 +316,17 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   void _filterProviders() {
     if (_selectedCategory == null) return;
-    
+
     final providers = _getProvidersForCategory(_selectedCategory!);
     if (_searchQuery.isEmpty) {
       _filteredProviders = providers;
     } else {
       _filteredProviders = providers.where((provider) {
-        return provider.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               provider.specialties.any((specialty) => 
-                  specialty.toLowerCase().contains(_searchQuery.toLowerCase()));
+        return provider.name
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            provider.specialties.any((specialty) =>
+                specialty.toLowerCase().contains(_searchQuery.toLowerCase()));
       }).toList();
     }
   }
@@ -302,7 +335,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     // Simulation de données - à remplacer par un appel API
     final random = [4.2, 4.5, 4.7, 4.8, 4.9];
     final distances = [0.5, 1.2, 2.1, 3.0, 5.5];
-    
+
     return List.generate(10, (index) {
       return ServiceProvider(
         id: '${category.id}_$index',
@@ -312,7 +345,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
         reviewCount: 50 + (index * 20),
         profileImage: null,
         specialties: _getSpecialties(category),
-        description: 'Expert en ${category.name.toLowerCase()} avec plusieurs années d\'expérience.',
+        description:
+            'Expert en ${category.name.toLowerCase()} avec plusieurs années d\'expérience.',
         phone: '+221 77 123 45 6$index',
         address: 'Quartier ${index + 1}, Dakar',
         isVerified: index < 5,
@@ -322,23 +356,54 @@ class _ServicesScreenState extends State<ServicesScreen> {
         availability: index % 2 == 0,
         portfolio: List.generate(3, (i) => 'image_${index}_$i.jpg'),
       );
-    })..sort((a, b) {
-      // Tri par distance puis par note
-      final distanceComparison = a.distance.compareTo(b.distance);
-      if (distanceComparison != 0) return distanceComparison;
-      return b.rating.compareTo(a.rating);
-    });
+    })
+      ..sort((a, b) {
+        // Tri par distance puis par note
+        final distanceComparison = a.distance.compareTo(b.distance);
+        if (distanceComparison != 0) return distanceComparison;
+        return b.rating.compareTo(a.rating);
+      });
   }
 
   String _getProviderName(ServiceCategory category, int index) {
     final names = {
-      'immobilier': ['Agence Premium', 'Dakar Properties', 'Sénégal Immo', 'Royal Estate', 'Urban Homes'],
-      'sante': ['Dr. Diallo', 'Cabinet Médical Plus', 'Clinique Moderne', 'Dr. Ndiaye', 'Centre Santé'],
-      'education': ['Prof. Sarr', 'École Excellence', 'Formation Pro', 'Institut Qualité', 'Académie Success'],
-      'reparation': ['Tech Expert', 'Répar\' Tout', 'Service Rapide', 'Artisan Pro', 'Fix Master'],
-      'transport': ['Taxi Premium', 'Transport Sûr', 'Livraison Express', 'Moov Transport', 'Quick Delivery'],
+      'immobilier': [
+        'Agence Premium',
+        'Dakar Properties',
+        'Sénégal Immo',
+        'Royal Estate',
+        'Urban Homes'
+      ],
+      'sante': [
+        'Dr. Diallo',
+        'Cabinet Médical Plus',
+        'Clinique Moderne',
+        'Dr. Ndiaye',
+        'Centre Santé'
+      ],
+      'education': [
+        'Prof. Sarr',
+        'École Excellence',
+        'Formation Pro',
+        'Institut Qualité',
+        'Académie Success'
+      ],
+      'reparation': [
+        'Tech Expert',
+        'Répar\' Tout',
+        'Service Rapide',
+        'Artisan Pro',
+        'Fix Master'
+      ],
+      'transport': [
+        'Taxi Premium',
+        'Transport Sûr',
+        'Livraison Express',
+        'Moov Transport',
+        'Quick Delivery'
+      ],
     };
-    
+
     final categoryNames = names[category.id] ?? ['Service ${index + 1}'];
     return categoryNames[index % categoryNames.length];
   }
@@ -351,18 +416,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
       'reparation': ['Électronique', 'Plomberie', 'Électricité'],
       'transport': ['Taxi', 'Livraison', 'Déménagement'],
     };
-    
+
     return specialties[category.id] ?? ['Service général'];
   }
 
   List<ServiceProvider> _getAllProviders() {
     final allCategories = ServiceData.getCategories();
     List<ServiceProvider> allProviders = [];
-    
+
     for (final category in allCategories) {
       allProviders.addAll(_getProvidersForCategory(category));
     }
-    
+
     return allProviders;
   }
 }

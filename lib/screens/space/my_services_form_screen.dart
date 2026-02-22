@@ -26,8 +26,13 @@ class _MyServicesFormScreenState extends State<MyServicesFormScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: 100), // Espace pour la navigation
           child: Form(
             key: _formKey,
             child: Column(

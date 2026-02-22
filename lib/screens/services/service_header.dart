@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/theme.dart';
-import '../notifications/notifications_screen.dart';
+import '../chat/chat_screen.dart';
 
 class ServiceHeader extends StatefulWidget {
   final String searchQuery;
@@ -23,7 +23,7 @@ class _ServiceHeaderState extends State<ServiceHeader>
   late TextEditingController _searchController;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -66,14 +66,14 @@ class _ServiceHeaderState extends State<ServiceHeader>
           children: [
             // Salutation et localisation
             _buildGreetingSection(),
-            
+
             const SizedBox(height: 20),
-            
+
             // Barre de recherche améliorée
             _buildSearchBar(),
-            
+
             const SizedBox(height: 16),
-            
+
             // Filtres rapides
             _buildQuickFilters(),
           ],
@@ -117,75 +117,24 @@ class _ServiceHeaderState extends State<ServiceHeader>
             ),
           ],
         ),
-        PopupMenuButton<String>(
-          elevation: 8,
-          offset: const Offset(0, 40),
-          shape: RoundedRectangleBorder(
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.primaryBlue.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          itemBuilder: (context) => const [
-            PopupMenuItem(
-              value: 'notif1',
-              child: ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.notifications_active_rounded, size: 20),
-                title: Text('Nouveau message'),
-                subtitle: Text('Tu as reçu un nouveau message.'),
-              ),
+          child: IconButton(
+            icon: Icon(
+              Icons.chat_rounded,
+              color: AppTheme.primaryBlue,
             ),
-            PopupMenuItem(
-              value: 'notif2',
-              child: ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.discount_rounded, size: 20),
-                title: Text('Promo sur tes services'),
-                subtitle: Text('Profite de nouvelles offres personnalisées.'),
-              ),
-            ),
-            PopupMenuItem(
-              value: 'notif3',
-              child: ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.home_repair_service_rounded, size: 20),
-                title: Text('Nouvel artisan disponible'),
-                subtitle: Text('Un nouvel artisan correspond à ta recherche.'),
-              ),
-            ),
-            PopupMenuItem(
-              value: 'see_more',
-              child: Center(
-                child: Text(
-                  'Voir plus',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-          onSelected: (value) {
-            if (value == 'see_more') {
+            onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const NotificationsScreen(),
+                  builder: (context) => const ChatScreen(showBack: true),
                 ),
               );
-            }
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.notifications_outlined,
-                color: AppTheme.primaryBlue,
-              ),
-              onPressed: null,
-            ),
+            },
           ),
         ),
       ],
@@ -198,7 +147,7 @@ class _ServiceHeaderState extends State<ServiceHeader>
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: widget.searchQuery.isNotEmpty 
+          color: widget.searchQuery.isNotEmpty
               ? AppTheme.primaryBlue.withOpacity(0.3)
               : Colors.transparent,
         ),

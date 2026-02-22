@@ -151,6 +151,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       value: _acquisitionSource,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(

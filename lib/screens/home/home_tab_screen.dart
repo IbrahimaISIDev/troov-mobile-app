@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'components/home_tab_header.dart';
 import 'components/main_image_section.dart';
 import 'components/product_section.dart';
-import '../services/services_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../space/my_space_screen.dart';
 
@@ -17,6 +16,8 @@ class HomeTabScreen extends StatefulWidget {
   final VoidCallback onThemeToggle;
   final VoidCallback onLogout;
   final VoidCallback onProfile;
+  final VoidCallback onNavigateToServices;
+  final VoidCallback onNavigateToTransfer;
   final bool isDarkMode;
 
   const HomeTabScreen({
@@ -24,6 +25,8 @@ class HomeTabScreen extends StatefulWidget {
     required this.onThemeToggle,
     required this.onLogout,
     required this.onProfile,
+    required this.onNavigateToServices,
+    required this.onNavigateToTransfer,
     required this.isDarkMode,
   }) : super(key: key);
 
@@ -180,12 +183,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... same Scaffold logic ...
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
+        bottom: false,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -232,12 +233,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       'assets/images/image4.png',
                     ],
                     onProductTap: (index) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ServicesScreen(),
-                        ),
-                      );
+                      widget.onNavigateToServices();
                     },
                     onSeeMoreTap: () {
                       // TODO: action Voir plus Mobilier
@@ -251,13 +247,13 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       'assets/images/image5.png',
                     ],
                     onProductTap: (index) {
-                      // TODO: action produit Transferts
+                      widget.onNavigateToTransfer();
                     },
                     onSeeMoreTap: () {
                       // TODO: action Voir plus Transferts
                     },
                   ),
-                  SizedBox(height: screenWidth * 0.05),
+                  const SizedBox(height: 100), // Espace pour la navigation
                 ],
               ),
             ),

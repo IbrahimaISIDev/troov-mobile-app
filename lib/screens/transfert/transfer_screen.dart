@@ -77,10 +77,12 @@ class _TransferScreenState extends State<TransferScreen> {
     // In a real app, use coordinates to reverse geocode and find Country
 
     // For DEMO/SIMULATION: Assume User is in Senegal
-    setState(() {
-      _currentCountryCode = 'SN';
-    });
-    _calculateFees();
+    if (mounted) {
+      setState(() {
+        _currentCountryCode = 'SN';
+      });
+      _calculateFees();
+    }
   }
 
   Future<void> _pickContact() async {

@@ -522,16 +522,12 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                                 shape: BoxShape.circle,
                                 border:
                                     Border.all(color: Colors.white, width: 2),
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/user_placeholder.png'), // Need a placeholder or use Icon
-                                  fit: BoxFit.cover,
-                                ),
                               ),
                               child: const CircleAvatar(
                                 backgroundColor: Colors.grey,
                                 backgroundImage: NetworkImage(
                                     'https://i.pravatar.cc/150?img=3'), // Mock profile
+                                child: Icon(Icons.person, color: Colors.white),
                               ),
                             ),
                           ),

@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://10.94.86.118:8081/api';
+  static const String baseUrl = 'https://troov-backend.onrender.com/api';
+  // static const String baseUrl = 'http://10.94.86.118:8081/api';
   static const String tokenKey = 'auth_token';
   // refreshTokenKey removed
   static const String userKey = 'user_data';

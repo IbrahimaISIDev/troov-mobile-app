@@ -51,6 +51,7 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             _buildHeader(screenWidth),
@@ -59,7 +60,12 @@ class _ServiceProviderListState extends State<ServiceProviderList> {
               child: sortedProviders.isEmpty
                   ? _buildEmptyState()
                   : ListView.builder(
-                      padding: EdgeInsets.all(screenWidth * 0.04),
+                      padding: EdgeInsets.only(
+                        left: screenWidth * 0.04,
+                        right: screenWidth * 0.04,
+                        top: screenWidth * 0.04,
+                        bottom: 100, // Espace pour la navigation
+                      ),
                       itemCount: sortedProviders.length,
                       itemBuilder: (context, index) {
                         return _buildProviderCard(

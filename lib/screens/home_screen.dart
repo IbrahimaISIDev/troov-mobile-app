@@ -5,8 +5,9 @@ import 'home/home_tab_screen.dart';
 import 'transfert/transfer_screen.dart';
 import 'services/services_screen.dart';
 import 'settings/settings_screen.dart';
-import 'welcome_screen.dart';
+import 'welcome_screen.dart' hide ServiceData;
 import 'troov/troov_screen.dart';
+import '../models/service_model.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -29,6 +30,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
+  ServiceCategory? _selectedServiceCategory;
+  final GlobalKey _servicesIconKey = GlobalKey();
+  bool _hideBottomBar = false;
 
   @override
   void dispose() {
@@ -76,11 +80,42 @@ class _HomeScreenState extends State<HomeScreen> {
                 curve: Curves.easeInOut,
               );
             },
+            onNavigateToServices: () {
+              setState(() {
+                _currentIndex = 3;
+              });
+              _pageController.animateToPage(
+                3,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            },
+            onNavigateToTransfer: () {
+              setState(() {
+                _currentIndex = 1;
+              });
+              _pageController.animateToPage(
+                1,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            },
             isDarkMode: widget.isDarkMode,
           ),
           TransferScreen(),
           TroovScreen(isActive: _currentIndex == 2),
-          ServicesScreen(),
+          ServicesScreen(
+            initialCategory: _selectedServiceCategory,
+            onHideBottomBar: (hide) {
+              Future.microtask(() {
+                if (mounted) {
+                  setState(() {
+                    _hideBottomBar = hide;
+                  });
+                }
+              });
+            },
+          ),
           SettingsScreen(
             onThemeToggle: widget.onThemeToggle,
             onLanguageChange: widget.onLanguageChange,
@@ -89,131 +124,296 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      extendBody:
+          true, // Allow content to go behind the transparent floating bar
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
   Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, -5),
-          ),
-        ],
+    if (_hideBottomBar) return const SizedBox.shrink();
+
+    final bool isTroovTab = _currentIndex == 2;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).padding.bottom + (isTroovTab ? 0 : 5),
+        left: 10,
+        right: 10,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            _pageController.animateToPage(
-              index,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          },
-          backgroundColor: Colors.transparent,
-          selectedItemColor: AppTheme.primaryBlue,
-          unselectedItemColor: Colors.grey[600],
-          elevation: 0,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          items: [
-            BottomNavigationBarItem(
-              icon: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 0
-                      ? (AppTheme.primaryBlue).withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.home_rounded),
+      child: SizedBox(
+        height: 80,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            Container(
+              height: 70,
+              decoration: BoxDecoration(
+                color: isTroovTab ? Colors.transparent : Colors.white,
+                borderRadius: BorderRadius.circular(35),
+                boxShadow: isTroovTab
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
               ),
-              label: 'Accueil',
-            ),
-            BottomNavigationBarItem(
-              icon: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 1
-                      ? (AppTheme.primaryBlue).withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.swap_horiz_rounded),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                      child: _buildNavItem(
+                          0, Icons.home_rounded, 'Accueil', isTroovTab)),
+                  Expanded(
+                      child: _buildNavItem(
+                          1, Icons.compare_arrows, 'Transfert', isTroovTab)),
+                  const SizedBox(width: 70), // Space for center button
+                  Expanded(
+                      child: _buildNavItem(
+                          3,
+                          _selectedServiceCategory?.icon ??
+                              Icons.design_services_rounded,
+                          _selectedServiceCategory?.name ?? 'Services',
+                          isTroovTab)),
+                  Expanded(
+                      child: _buildNavItem(
+                          4, Icons.manage_accounts, 'Paramètres', isTroovTab)),
+                ],
               ),
-              label: 'Transfert',
             ),
-            BottomNavigationBarItem(
-              icon: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 2
-                      ? (AppTheme.primaryBlue).withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            // Center overlapping button
+            Positioned(
+              top: 0,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _currentIndex = 2);
+                  _pageController.animateToPage(2,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut);
+                },
                 child: Container(
-                  width: 24,
-                  height: 24,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
+                    color: isTroovTab ? Colors.transparent : Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: isTroovTab
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                  padding: EdgeInsets.all(isTroovTab ? 0 : 12),
+                  child: ClipOval(
                     child: Image.asset(
                       'assets/images/logo_troov-mini.jpeg',
-                      fit: BoxFit.contain,
+                      fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.play_circle_fill_rounded);
+                        return Icon(
+                          Icons.play_circle_fill_rounded,
+                          color: isTroovTab ? Colors.white : Colors.white,
+                          size: 30,
+                        );
                       },
                     ),
                   ),
                 ),
               ),
-              label: 'Troov',
             ),
-            BottomNavigationBarItem(
-              icon: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 3
-                      ? (AppTheme.primaryBlue).withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.design_services_rounded),
+          ],
+        ),
+      ),
+    );
+  }
+
+  OverlayEntry? _overlayEntry;
+
+  void _hideServicesCategoriesDropdown() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _showServicesCategoriesDropdown() {
+    if (_overlayEntry != null) {
+      _hideServicesCategoriesDropdown();
+      return;
+    }
+
+    final categories = ServiceData.getCategories();
+    final RenderBox? renderBox =
+        _servicesIconKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Calculate the popup width and position
+    final popupWidth = 220.0;
+    // Try to center it above the icon, but keep within screen bounds
+    double leftPosition = offset.dx + (size.width / 2) - (popupWidth / 2);
+    if (leftPosition < 10) leftPosition = 10;
+    if (leftPosition + popupWidth > MediaQuery.of(context).size.width - 10) {
+      leftPosition = MediaQuery.of(context).size.width - popupWidth - 10;
+    }
+
+    // Bottom of the popup should be exactly at the top of the icon (with a small margin)
+    final bottomPosition = screenHeight - offset.dy + 10;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            // Background to dismiss
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _hideServicesCategoriesDropdown,
+                child: Container(color: Colors.transparent),
               ),
-              label: 'Services',
             ),
-            BottomNavigationBarItem(
-              icon: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 4
-                      ? (AppTheme.primaryBlue).withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+            Positioned(
+              left: leftPosition,
+              bottom: bottomPosition,
+              width: popupWidth,
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    alignment: Alignment.bottomCenter,
+                    child: Opacity(
+                      opacity: value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Material(
+                  elevation: 8,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          dense: true,
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          leading: const Icon(Icons.design_services_rounded,
+                              color: Colors.blueGrey, size: 20),
+                          title: const Text('Tous les services',
+                              style: TextStyle(fontSize: 14)),
+                          onTap: () {
+                            _hideServicesCategoriesDropdown();
+                            setState(() {
+                              _selectedServiceCategory = null;
+                              _currentIndex = 3;
+                            });
+                            _pageController.jumpToPage(3);
+                          },
+                        ),
+                        const Divider(height: 1),
+                        ...categories
+                            .map((category) => ListTile(
+                                  dense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  leading: Icon(category.icon,
+                                      color: category.color, size: 20),
+                                  title: Text(category.name,
+                                      style: const TextStyle(fontSize: 14)),
+                                  onTap: () {
+                                    _hideServicesCategoriesDropdown();
+                                    setState(() {
+                                      _selectedServiceCategory = category;
+                                      _currentIndex = 3;
+                                    });
+                                    _pageController.jumpToPage(3);
+                                  },
+                                ))
+                            .toList(),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Icon(Icons.settings_rounded),
               ),
-              label: 'Paramètres',
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  Widget _buildNavItem(
+      int index, IconData icon, String label, bool isTroovTab) {
+    final isSelected = _currentIndex == index;
+    final defaultUnselectedColor = Colors.grey[600]!;
+    final iconColor = isSelected
+        ? AppTheme.primaryBlue
+        : (isTroovTab ? Colors.white70 : defaultUnselectedColor);
+    final labelColor = isSelected
+        ? AppTheme.primaryBlue
+        : (isTroovTab ? Colors.white70 : defaultUnselectedColor);
+
+    return GestureDetector(
+      onTap: () {
+        setState(() => _currentIndex = index);
+        _pageController.animateToPage(index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut);
+      },
+      onLongPress: () {
+        if (index == 3) {
+          _showServicesCategoriesDropdown();
+        }
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: Colors.transparent,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppTheme.primaryBlue.withOpacity(0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                key: index == 3 ? _servicesIconKey : null,
+                color: iconColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: labelColor,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

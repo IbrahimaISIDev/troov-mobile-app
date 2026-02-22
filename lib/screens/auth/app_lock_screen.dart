@@ -161,35 +161,42 @@ class _AppLockScreenState extends State<AppLockScreen> {
           child: Column(
             children: [
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildHeader(isSmallScreen),
-                      SizedBox(height: isSmallScreen ? 30 : 50),
-                      _buildPinRow(),
-                      if (_errorMessage.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          _errorMessage,
-                          style: TextStyle(
-                            color: Colors.red[600],
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                      if (_canCheckBiometrics) ...[
-                        const SizedBox(height: 20),
-                        TextButton.icon(
-                          onPressed: _authenticateWithBiometrics,
-                          icon: Icon(Icons.fingerprint,
-                              color: AppTheme.primaryBlue, size: 32),
-                          label: Text('Utiliser l\'empreinte',
-                              style: TextStyle(color: AppTheme.primaryBlue)),
-                        ),
-                      ],
-                    ],
+                child: Center(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildHeader(isSmallScreen),
+                          SizedBox(height: isSmallScreen ? 30 : 50),
+                          _buildPinRow(),
+                          if (_errorMessage.isNotEmpty) ...[
+                            const SizedBox(height: 20),
+                            Text(
+                              _errorMessage,
+                              style: TextStyle(
+                                color: Colors.red[600],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                          if (_canCheckBiometrics) ...[
+                            const SizedBox(height: 20),
+                            TextButton.icon(
+                              onPressed: _authenticateWithBiometrics,
+                              icon: Icon(Icons.fingerprint,
+                                  color: AppTheme.primaryBlue, size: 32),
+                              label: Text('Utiliser l\'empreinte',
+                                  style:
+                                      TextStyle(color: AppTheme.primaryBlue)),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
