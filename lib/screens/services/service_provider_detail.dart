@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
+import '../../services/feedback_service.dart';
+import 'package:intl/intl.dart';
 import '../../utils/theme.dart';
 import '../chat/chat_detail_screen.dart';
 import '../../widgets/story_status_avatar.dart';
@@ -29,6 +31,7 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadFeedbacks();
   }
 
   @override
@@ -480,15 +483,50 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
     );
   }
 
+  final FeedbackService _feedbackService = FeedbackService();
+  List<FeedbackModel> _feedbacks = [];
+  bool _isLoadingFeedbacks = true;
+
+  Future<void> _loadFeedbacks() async {
+    final feedbacks = await _feedbackService.getProviderFeedbacks(widget.provider.id);
+    if (mounted) {
+      setState(() {
+        _feedbacks = feedbacks;
+        _isLoadingFeedbacks = false;
+      });
+    }
+  }
+
   Widget _buildReviewsTab(double screenWidth) {
+    if (_isLoadingFeedbacks) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_feedbacks.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.rate_review_outlined, size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              'Aucun avis pour le moment',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
     final fontSize = screenWidth < 600 ? 12 : 14;
     final smallFontSize = screenWidth < 600 ? 10 : 12;
 
     return Container(
       margin: EdgeInsets.all(screenWidth * 0.04),
       child: ListView.builder(
-        itemCount: 5,
+        itemCount: _feedbacks.length,
         itemBuilder: (context, index) {
+          final feedback = _feedbacks[index];
           return Container(
             margin: EdgeInsets.only(bottom: screenWidth * 0.03),
             padding: EdgeInsets.all(screenWidth * 0.04),
@@ -510,24 +548,37 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
                 Row(
                   children: [
                     CircleAvatar(
-                      radius: smallFontSize + 0,
+                      radius: smallFontSize + 4,
                       backgroundColor: Colors.grey.shade200,
-                      child: Icon(
-                        Icons.person,
-                        size: smallFontSize + 0,
-                        color: Colors.grey,
-                      ),
+                      backgroundImage: (feedback.userProfileImage != null && feedback.userProfileImage!.isNotEmpty)
+                        ? NetworkImage(feedback.userProfileImage!)
+                        : null,
+                      child: (feedback.userProfileImage == null || feedback.userProfileImage!.isEmpty)
+                        ? Icon(Icons.person, size: smallFontSize + 4, color: Colors.grey)
+                        : null,
                     ),
                     SizedBox(width: screenWidth * 0.02),
                     Flexible(
-                      child: Text(
-                        'Utilisateur ${index + 1}',
-                        style: TextStyle(
-                          fontSize: fontSize - 0,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            feedback.userName ?? 'Utilisateur',
+                            style: TextStyle(
+                              fontSize: fontSize - 0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            DateFormat('dd MMM yyyy', 'fr_FR').format(feedback.date),
+                            style: TextStyle(
+                              fontSize: smallFontSize - 2,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const Spacer(),
@@ -538,9 +589,9 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
                           size: smallFontSize + 2,
                           color: Colors.amber.shade600,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          '${(4.0 + (index % 2)).toStringAsFixed(1)}',
+                          '${feedback.rating?.toDouble() ?? 0.0}',
                           style: TextStyle(fontSize: smallFontSize + 0),
                         ),
                       ],
@@ -550,12 +601,12 @@ class _ServiceProviderDetailState extends State<ServiceProviderDetail>
                 SizedBox(height: screenWidth * 0.02),
                 Flexible(
                   child: Text(
-                    'Service de qualité, très professionnel. Je recommande vivement !',
+                    feedback.comment ?? feedback.message ?? 'Aucun commentaire',
                     style: TextStyle(
                       fontSize: smallFontSize - 0,
                       color: Colors.grey.shade600,
                     ),
-                    maxLines: 3,
+                    maxLines: 5,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

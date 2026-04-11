@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 import '../../services/post_service.dart';
 import '../../models/post_model.dart';
 
@@ -27,7 +30,9 @@ class _PublishTroovScreenState extends State<PublishTroovScreen> {
       _error = '';
     });
     try {
+      print('PublishTroovScreen: Fetching user posts...');
       final posts = await _postService.getUserPosts();
+      print('PublishTroovScreen: Fetched ${posts.length} posts');
       if (mounted) {
         setState(() {
           _posts = posts;
@@ -35,6 +40,7 @@ class _PublishTroovScreenState extends State<PublishTroovScreen> {
         });
       }
     } catch (e) {
+      print('PublishTroovScreen: Error fetching posts: $e');
       if (mounted) {
         setState(() {
           _error = e.toString();
@@ -194,12 +200,16 @@ class _PublishTroovScreenState extends State<PublishTroovScreen> {
   }
 
   Widget _buildGridItem(Post post) {
-    final imageUrl = post.mediaUrls.isNotEmpty
-        ? post.mediaUrls.first
-        : 'https://via.placeholder.com/300?text=No+Image';
+    final String mediaUrl = (post.mediaUrl != null && post.mediaUrl!.isNotEmpty)
+        ? post.mediaUrl!
+        : 'https://via.placeholder.com/300?text=No+Media';
+
+    final bool isVideo = mediaUrl.toLowerCase().contains('.mp4') || 
+                         mediaUrl.toLowerCase().contains('.mov') || 
+                         mediaUrl.toLowerCase().contains('.m4v');
 
     return GestureDetector(
-      onTap: () => _openImageDetail(context, imageUrl, post),
+      onTap: () => _openMediaDetail(context, mediaUrl, post, isVideo),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
@@ -215,9 +225,28 @@ class _PublishTroovScreenState extends State<PublishTroovScreen> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Stack(
+            fit: StackFit.loose,
             alignment: Alignment.bottomRight,
             children: [
-              Image.network(imageUrl, fit: BoxFit.cover),
+              isVideo 
+                ? Image.network(post.getThumbnailUrl(), 
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 200,
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: Icon(Icons.play_circle_fill, color: Colors.blueAccent, size: 50),
+                      ),
+                    ),
+                  )
+                : Image.network(mediaUrl, 
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 200,
+                      color: Colors.grey.shade100,
+                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                    ),
+                  ),
               // Subtle gradient overlay for stats visibility
               Container(
                 height: 40,
@@ -251,7 +280,7 @@ class _PublishTroovScreenState extends State<PublishTroovScreen> {
     );
   }
 
-  void _openImageDetail(BuildContext context, String imageUrl, Post post) {
+  void _openMediaDetail(BuildContext context, String mediaUrl, Post post, bool isVideo) {
     Navigator.of(context).push(PageRouteBuilder(
       opaque: false, // Transparent background
       pageBuilder: (BuildContext context, _, __) {
@@ -273,7 +302,9 @@ class _PublishTroovScreenState extends State<PublishTroovScreen> {
                         constraints: BoxConstraints(
                           maxHeight: MediaQuery.of(context).size.height * 0.7,
                         ),
-                        child: Image.network(imageUrl, fit: BoxFit.contain)),
+                        child: isVideo 
+                          ? VideoPlayerDetail(videoUrl: mediaUrl)
+                          : Image.network(mediaUrl, fit: BoxFit.contain)),
                   ),
                   const SizedBox(height: 30),
                   // Detailed Stats
@@ -342,26 +373,119 @@ class CreatePostModal extends StatefulWidget {
 
 class _CreatePostModalState extends State<CreatePostModal> {
   final TextEditingController _descController = TextEditingController();
-  final TextEditingController _imageController =
-      TextEditingController(); // For URL input
+  final TextEditingController _imageController = TextEditingController(); // For URL input (fallback)
+  
+  File? _selectedMedia;
+  VideoPlayerController? _videoController;
+  final ImagePicker _picker = ImagePicker();
+  
   final PostService _postService = PostService();
   bool _isLoading = false;
 
-  Future<void> _publish() async {
-    if (_descController.text.isEmpty) return;
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    _descController.dispose();
+    _imageController.dispose();
+    super.dispose();
+  }
 
+  Future<void> _pickMedia() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Image'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Vidéo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickVideo();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        _videoController?.dispose();
+        setState(() {
+          _selectedMedia = File(image.path);
+          _videoController = null;
+        });
+      }
+    } catch (e) {
+      print("Erreur selection image: $e");
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+      if (video != null) {
+        final file = File(video.path);
+        // Pré-initialisation pour l'aperçu
+        final controller = VideoPlayerController.file(file);
+        await controller.initialize();
+        
+        setState(() {
+          _selectedMedia = file;
+          _videoController = controller;
+        });
+        controller.play();
+        controller.setLooping(true);
+      }
+    } catch (e) {
+      print("Erreur selection video: $e");
+    }
+  }
+
+  bool get _isVideoSelected => _selectedMedia != null && 
+      (_selectedMedia!.path.toLowerCase().endsWith('.mp4') || 
+       _selectedMedia!.path.toLowerCase().endsWith('.mov') ||
+       _selectedMedia!.path.toLowerCase().endsWith('.m4v'));
+
+  Future<void> _publish() async {
+    if (_descController.text.isEmpty && _selectedMedia == null) return;
+    
     setState(() {
       _isLoading = true;
     });
 
     try {
+      // 1. Upload le média local si il est selectionne
+      String? finalImageUrl;
+      if (_selectedMedia != null) {
+        finalImageUrl = await _postService.uploadImage(_selectedMedia!);
+      } else if (_imageController.text.isNotEmpty) {
+        finalImageUrl = _imageController.text;
+      } else {
+        finalImageUrl = 'https://picsum.photos/400/500?random=${DateTime.now().millisecondsSinceEpoch}';
+      }
+
+      if (finalImageUrl == null) {
+        throw Exception("Échec de l'upload de l'image.");
+      }
+
+      // 2. Création de la publication
       final newPost = await _postService.createPost(
         description: _descController.text,
-        mediaUrls: _imageController.text.isNotEmpty
-            ? [_imageController.text]
-            : [
-                'https://picsum.photos/400/500?random=${DateTime.now().millisecondsSinceEpoch}'
-              ], // Random fallback
+        mediaUrl: finalImageUrl,
         category: 'General',
       );
       print('PublishTroovScreen: Post created successfully: ${newPost.id}');
@@ -437,38 +561,65 @@ class _CreatePostModalState extends State<CreatePostModal> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   GestureDetector(
-                    onTap: () {
-                      // TODO: Implement image picker. For now showing URL field.
-                    },
+                    onTap: _pickMedia,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: _selectedMedia != null ? EdgeInsets.zero : const EdgeInsets.all(16),
                       width: double.infinity,
+                      height: 250,
                       decoration: BoxDecoration(
                         color: Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.grey.shade200),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.add_a_photo_outlined,
-                              size: 40, color: Colors.grey),
-                          const SizedBox(height: 10),
-                          const Text('URL de l\'image (Temporaire)',
-                              style: TextStyle(color: Colors.grey)),
-                          TextField(
-                            controller: _imageController,
-                            decoration: const InputDecoration(
-                              hintText: 'https://example.com/image.jpg',
-                              isDense: true,
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
+                      child: _selectedMedia != null
+                          ? Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: _isVideoSelected && _videoController != null && _videoController!.value.isInitialized
+                                      ? AspectRatio(
+                                          aspectRatio: _videoController!.value.aspectRatio,
+                                          child: VideoPlayer(_videoController!),
+                                        )
+                                      : Image.file(_selectedMedia!, fit: BoxFit.cover),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedMedia = null;
+                                        _videoController?.dispose();
+                                        _videoController = null;
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.close, color: Colors.white, size: 20),
+                                    ),
+                                  ),
+                                ),
+                                if (_isVideoSelected)
+                                  const Center(
+                                    child: Icon(Icons.play_circle_fill, color: Colors.white, size: 50),
+                                  ),
+                              ],
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey),
+                                SizedBox(height: 10),
+                                Text('Ajouter une image ou une vidéo',
+                                    style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+                              ],
                             ),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.blue),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -520,6 +671,52 @@ class _CreatePostModalState extends State<CreatePostModal> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class VideoPlayerDetail extends StatefulWidget {
+  final String videoUrl;
+  const VideoPlayerDetail({Key? key, required this.videoUrl}) : super(key: key);
+
+  @override
+  State<VideoPlayerDetail> createState() => _VideoPlayerDetailState();
+}
+
+class _VideoPlayerDetailState extends State<VideoPlayerDetail> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isInitialized = true;
+          });
+          _controller.play();
+          _controller.setLooping(true);
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.white));
+    }
+    return AspectRatio(
+      aspectRatio: _controller.value.aspectRatio,
+      child: VideoPlayer(_controller),
     );
   }
 }

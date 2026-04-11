@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../services/activity_service.dart';
+import '../../services/auth_service.dart';
+import '../../models/activity_model.dart';
 
 class MyPurchasesScreen extends StatefulWidget {
   const MyPurchasesScreen({Key? key}) : super(key: key);
@@ -10,11 +14,60 @@ class MyPurchasesScreen extends StatefulWidget {
 class _MyPurchasesScreenState extends State<MyPurchasesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ActivityService _activityService = ActivityService();
+  final AuthService _authService = AuthService();
+  
+  List<Activity> _allPurchases = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadPurchases();
+  }
+
+  Future<void> _loadPurchases() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) {
+        final purchases = await _activityService.getActivitiesByUser(user.id);
+        setState(() {
+          _allPurchases = purchases.where((a) => a.type == ActivityType.PURCHASE).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = "Utilisateur non authentifié.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = "Erreur lors du chargement des achats: $e";
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<Activity> _getFilteredPurchases(bool isHistory) {
+    if (isHistory) {
+      return _allPurchases.where((a) => a.status == ActivityStatus.SOLD || a.status == ActivityStatus.DELIVERED || a.status == ActivityStatus.CANCELLED).toList();
+    } else {
+      return _allPurchases.where((a) => a.status == ActivityStatus.NEW || a.status == ActivityStatus.PENDING).toList();
+    }
   }
 
   @override
@@ -38,32 +91,64 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildPurchasesList(isHistory: false),
-          _buildPurchasesList(isHistory: true),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)))
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildPurchasesList(isHistory: false),
+                    _buildPurchasesList(isHistory: true),
+                  ],
+                ),
     );
   }
 
   Widget _buildPurchasesList({required bool isHistory}) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 4,
-      itemBuilder: (context, index) {
-        return _buildPurchaseCard(context, index, isHistory);
-      },
+    final filtered = _getFilteredPurchases(isHistory);
+    
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.shopping_bag_outlined, size: 60, color: Colors.grey.shade300),
+            const SizedBox(height: 10),
+            Text('Aucun achat dans cette catégorie', style: TextStyle(color: Colors.grey.shade500)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadPurchases,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          return _buildPurchaseCard(context, filtered[index]);
+        },
+      ),
     );
   }
 
-  Widget _buildPurchaseCard(BuildContext context, int index, bool isHistory) {
-    Color statusColor = isHistory ? Colors.green : Colors.orange;
-    String statusText = isHistory ? 'Livré' : 'En route';
+  Widget _buildPurchaseCard(BuildContext context, Activity activity) {
+    bool isComplete = activity.status == ActivityStatus.SOLD || activity.status == ActivityStatus.DELIVERED;
+    Color statusColor = isComplete ? Colors.green : (activity.status == ActivityStatus.CANCELLED ? Colors.red : Colors.orange);
+    String statusText = isComplete ? 'Livré' : (activity.status == ActivityStatus.CANCELLED ? 'Annulé' : 'En route');
+
+    final String title = activity.product?.title ?? 'Produit inconnu';
+    final String price = activity.product?.price != null 
+        ? '${NumberFormat("#,###", "fr_FR").format(activity.product!.price)} FCFA' 
+        : 'Prix variable';
+    final String date = DateFormat('dd/MM/yyyy HH:mm').format(activity.createdAt);
+    final String imageUrl = (activity.product?.images != null && activity.product!.images.isNotEmpty)
+        ? activity.product!.images.first
+        : 'https://via.placeholder.com/150';
 
     return GestureDetector(
-      onTap: () => _showPurchaseDetail(context, index),
+      onTap: () => _showPurchaseDetail(context, activity),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -82,53 +167,48 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left: Image
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
-                'https://picsum.photos/150?random=${index + 10}',
+                imageUrl,
                 width: 90,
                 height: 90,
                 fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 12),
-            // Right: Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title & Price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Expanded(
-                          child: Text('iPhone 15 Pro',
-                              style: TextStyle(
+                          child: Text(title,
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 14),
                               overflow: TextOverflow.ellipsis)),
-                      Text('650 000 FCFA',
-                          style: TextStyle(
+                      Text(price,
+                          style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 14)),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // Date & Ref
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('18/12/2025 14:05',
+                      Text(date,
                           style: TextStyle(
                               color: Colors.blue.shade700,
                               fontSize: 12,
                               fontWeight: FontWeight.w500)),
-                      Text('ORD-7823',
+                      Text('REF: ${activity.id.substring(0, 5).toUpperCase()}',
                           style: TextStyle(
                               color: Colors.grey.shade500, fontSize: 11)),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Status & Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -153,7 +233,7 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen>
     );
   }
 
-  void _showPurchaseDetail(BuildContext context, int index) {
+  void _showPurchaseDetail(BuildContext context, Activity activity) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -177,13 +257,14 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen>
             const Text('Détails de la commande',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            // Seller Info
             ListTile(
-              leading: const CircleAvatar(
-                  backgroundImage:
-                      NetworkImage('https://picsum.photos/100?user=seller')),
-              title: const Text('Boutique: Electronix DK'),
-              subtitle: const Text('+221 77 000 00 00'),
+              leading: CircleAvatar(
+                  backgroundImage: activity.provider?.logoUrl != null 
+                      ? NetworkImage(activity.provider!.logoUrl!) 
+                      : (activity.provider?.user?.profileImage != null ? NetworkImage(activity.provider!.user!.profileImage!) : null),
+                  child: (activity.provider?.logoUrl == null && activity.provider?.user?.profileImage == null) ? const Icon(Icons.store) : null),
+              title: Text('Boutique: ${activity.provider?.agencyName ?? activity.provider?.user?.pseudo ?? 'Prestataire'}'),
+              subtitle: Text(activity.provider?.user?.phoneNumber ?? 'N/A'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -200,19 +281,19 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen>
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(20),
-                children: const [
-                  Text('Récapitulatif',
+                children: [
+                  const Text('Récapitulatif',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 10),
-                  Text('Produit: iPhone 15 Pro'),
-                  Text('Prix: 650 000 FCFA'),
-                  Text('Date: 18/12/2025'),
-                  SizedBox(height: 20),
-                  Text('Statut de livraison',
+                  const SizedBox(height: 10),
+                  Text('Produit: ${activity.product?.title ?? 'N/A'}'),
+                  Text('Prix: ${activity.product?.price != null ? NumberFormat("#,###", "fr_FR").format(activity.product!.price) : '0'} FCFA'),
+                  Text('Date: ${DateFormat('dd/MM/yyyy HH:mm').format(activity.createdAt)}'),
+                  const SizedBox(height: 20),
+                  const Text('Statut de livraison',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text('En cours d\'acheminement vers Liberté 6'),
+                  Text(activity.status.toString().split('.').last),
                 ],
               ),
             ),

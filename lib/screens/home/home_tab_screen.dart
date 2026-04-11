@@ -6,11 +6,17 @@ import '../notifications/notifications_screen.dart';
 import '../space/my_space_screen.dart';
 
 import '../../services/story_service.dart';
+import '../../services/product_service.dart';
+import '../../services/provider_service.dart';
+import '../../services/category_service.dart';
 import '../../models/story_model.dart';
+import '../../models/product.dart';
+import '../../models/category_model.dart' as cm;
 import 'story_view_screen.dart';
 import '../../widgets/story_status_avatar.dart';
 import 'create_text_status_screen.dart';
 import 'create_media_status_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
 class HomeTabScreen extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -36,35 +42,67 @@ class HomeTabScreen extends StatefulWidget {
 
 class _HomeTabScreenState extends State<HomeTabScreen> {
   final StoryService _storyService = StoryService();
+  final ProductService _productService = ProductService();
+  final ProviderService _providerService = ProviderService();
+  final CategoryService _categoryService = CategoryService();
+  final ImagePicker _picker = ImagePicker();
+
   List<Story> _myStories = [];
   List<Story> _otherStories = [];
+  List<Product> _popularProducts = [];
+  List<cm.Category> _categories = [];
   bool _isLoadingStories = true;
-  // Combine for viewing? Or separate viewers?
-  // Usually story viewer takes a list.
-  // If we open "My Story", list is [MyStory].
-  // If we open "Others", list can be all others?
+  bool _isLoadingData = true;
 
   @override
   void initState() {
     super.initState();
-    _loadStories();
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
+    await Future.wait([
+      _loadStories(),
+      _loadDynamicSections(),
+    ]);
   }
 
   Future<void> _loadStories() async {
     setState(() => _isLoadingStories = true);
-    final myStories = await _storyService.getMyStatuses();
-    final otherStories = await _storyService.getOtherStatuses();
+    try {
+      final myStories = await _storyService.getMyStatuses();
+      final otherStories = await _storyService.getOtherStatuses();
+      if (mounted) {
+        setState(() {
+          _myStories = myStories;
+          _otherStories = otherStories;
+          _isLoadingStories = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingStories = false);
+    }
+  }
 
-    // Also refresh cache for helper methods if needed elsewhere
-    // _storyService.refreshStories(); // If we strictly use service state.
-    // But here we manage state locally in widget.
+  Future<void> _loadDynamicSections() async {
+    setState(() => _isLoadingData = true);
+    try {
+      final futures = await Future.wait([
+        _productService.getAllProducts(),
+        _providerService.getAllProviders(),
+        _categoryService.getAllCategories(),
+      ]);
 
-    if (mounted) {
-      setState(() {
-        _myStories = myStories;
-        _otherStories = otherStories;
-        _isLoadingStories = false;
-      });
+      if (mounted) {
+        setState(() {
+          _popularProducts = (futures[0] as List<Product>)
+            ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
+          _categories = futures[2] as List<cm.Category>;
+          _isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingData = false);
     }
   }
 
@@ -78,7 +116,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         ),
       ),
     ).then((_) {
-      // Refresh when coming back (to update viewed status)
       _loadStories();
     });
   }
@@ -91,13 +128,13 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Container(
-        padding: EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Ajouter un statut",
+            const Text("Ajouter un statut",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -118,16 +155,63 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   label: "Galerie",
                   onTap: () {
                     Navigator.pop(ctx);
-                    _simulateMediaPicker();
+                    _showMediaOptions();
                   },
                 ),
               ],
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
           ],
         ),
       ),
     );
+  }
+
+  void _showMediaOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Choisir une Image'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickMedia(ImageSource.gallery, isVideo: false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Choisir une Vidéo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickMedia(ImageSource.gallery, isVideo: true);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickMedia(ImageSource source, {required bool isVideo}) async {
+    final XFile? file = isVideo 
+        ? await _picker.pickVideo(source: source)
+        : await _picker.pickImage(source: source);
+    
+    if (file != null) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CreateMediaStatusScreen(mediaPath: file.path)),
+      );
+
+      if (result == true) {
+        _loadStories();
+      }
+    }
   }
 
   Widget _buildOption(
@@ -145,8 +229,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             backgroundColor: color,
             child: Icon(icon, color: iconColor, size: 28),
           ),
-          SizedBox(height: 8),
-          Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -155,27 +239,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   void _openTextCreation() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CreateTextStatusScreen()),
+      MaterialPageRoute(builder: (context) => const CreateTextStatusScreen()),
     );
-    if (result == true) {
-      _loadStories();
-    }
-  }
-
-  void _simulateMediaPicker() async {
-    // Logic: User picks image -> We get path -> Open Preview
-    // Simulating picking an image
-    await Future.delayed(Duration(milliseconds: 500));
-    // Mock result
-    final String mockPath =
-        "https://picsum.photos/400/800"; // Random vertical image
-
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => CreateMediaStatusScreen(mediaPath: mockPath)),
-    );
-
     if (result == true) {
       _loadStories();
     }
@@ -193,68 +258,46 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               maxWidth: 430,
               minWidth: 320,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  HomeTabHeader(
-                    onNotificationsTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationsScreen(),
-                        ),
-                      );
-                    },
-                    onProfileTap: widget.onProfile,
-                    onMySpaceTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MySpaceScreen(),
-                        ),
-                      );
-                    },
-                    onLogoutTap: widget.onLogout,
-                    onThemeToggle: widget.onThemeToggle,
-                    isDarkMode: widget.isDarkMode,
-                  ),
-                  _buildStoriesBar(),
-                  // ... rest of children ...
-                  MainImageSection(
-                    onDiscoverTap: () {},
-                  ),
-                  _buildHomeTaglineAndStats(context),
-                  ProductSection(
-                    title: "Troov. le mobilier d'occasion à bon prix",
-                    images: const [
-                      'assets/images/image.png',
-                      'assets/images/image3.png',
-                      'assets/images/image4.png',
-                    ],
-                    onProductTap: (index) {
-                      widget.onNavigateToServices();
-                    },
-                    onSeeMoreTap: () {
-                      // TODO: action Voir plus Mobilier
-                    },
-                  ),
-                  ProductSection(
-                    title: "Troov. transferts d'argent au meilleur prix",
-                    images: const [
-                      'assets/images/image1.png',
-                      'assets/images/image2.png',
-                      'assets/images/image5.png',
-                    ],
-                    onProductTap: (index) {
-                      widget.onNavigateToTransfer();
-                    },
-                    onSeeMoreTap: () {
-                      // TODO: action Voir plus Transferts
-                    },
-                  ),
-                  const SizedBox(height: 100), // Espace pour la navigation
-                ],
+            child: RefreshIndicator(
+              onRefresh: _loadAllData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    HomeTabHeader(
+                      onNotificationsTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                      onProfileTap: widget.onProfile,
+                      onMySpaceTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MySpaceScreen(),
+                          ),
+                        );
+                      },
+                      onLogoutTap: widget.onLogout,
+                      onThemeToggle: widget.onThemeToggle,
+                      isDarkMode: widget.isDarkMode,
+                    ),
+                    _buildStoriesBar(),
+                    MainImageSection(
+                      onDiscoverTap: () {},
+                    ),
+                    _buildHomeTaglineAndStats(context),
+                    
+                    ..._buildDynamicProductSections(),
+
+                    const SizedBox(height: 100), // Espace pour la navigation
+                  ],
+                ),
               ),
             ),
           ),
@@ -262,6 +305,62 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       ),
     );
   }
+
+  List<Widget> _buildDynamicProductSections() {
+    if (_isLoadingData) {
+      return [
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: CircularProgressIndicator(),
+          ),
+        )
+      ];
+    }
+
+    List<Widget> sections = [];
+    
+    for (var cat in _categories) {
+      // Filter products for this category
+      final catProducts = _popularProducts.where((p) => 
+        p.category.toLowerCase() == cat.title.toLowerCase()
+      ).toList();
+
+      if (catProducts.isEmpty) continue;
+
+      // Logic for title and sorting
+      String title = cat.title;
+      List<Product> displayProducts = List.from(catProducts);
+
+      if (cat.title.toLowerCase().contains('mobilier')) {
+        title = "le mobilier d'occasion à bon prix";
+        // Sort by cheapest for "bon prix"
+        displayProducts.sort((a, b) => a.numericPrice.compareTo(b.numericPrice));
+      } else if (cat.title.toLowerCase().contains('transfert')) {
+        title = "transferts d'argent au meilleur prix";
+      } else {
+        title = "${cat.title} de qualité";
+      }
+
+      sections.add(
+        ProductSection(
+          title: "Troov. $title",
+          images: displayProducts.map((p) => p.getThumbnailUrl()).toList(),
+          onProductTap: (index) {
+            // Navigate to product detail or services
+            widget.onNavigateToServices();
+          },
+          onSeeMoreTap: () {
+            widget.onNavigateToServices();
+          },
+        ),
+      );
+    }
+
+    return sections;
+  }
+
+
 
   Widget _buildStoriesBar() {
     if (_isLoadingStories) {

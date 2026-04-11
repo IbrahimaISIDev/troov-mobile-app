@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
 import '../../services/auth_service.dart';
 import 'reset_password_screen.dart';
-import 'subscription_screen.dart';
-import 'profile_setup_screen.dart';
+import 'onboarding/onboarding_source_screen.dart';
 
 class OtpCodeScreen extends StatefulWidget {
   final String? phone;
@@ -75,19 +74,11 @@ class _OtpCodeScreenState extends State<OtpCodeScreen> {
             const SnackBar(content: Text('Compte activé avec succès !')),
           );
 
-          if (widget.isProvider) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const SubscriptionScreen()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const ProfileSetupScreen()),
-            );
-          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const OnboardingSourceScreen()),
+          );
         } else {
           throw Exception('Code invalide ou expiré');
         }

@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
-import '../../models/service_model.dart';
+import '../../models/product.dart';
+import '../../utils/theme.dart';
 
 class PopularServices extends StatelessWidget {
-  final Function(PopularService) onServiceTap;
+  final List<Product> products;
+  final Function(Product) onServiceTap;
+  final VoidCallback onSeeAll;
 
   const PopularServices({
     super.key,
+    required this.products,
     required this.onServiceTap,
+    required this.onSeeAll,
   });
 
   @override
   Widget build(BuildContext context) {
-    final popularServices = ServiceData.getPopularServices();
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+
+    // Limit to 10 products
+    final displayProducts = products.take(10).toList();
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -37,9 +44,7 @@ class PopularServices extends StatelessWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {
-                    // Voir tous les services populaires
-                  },
+                  onPressed: onSeeAll,
                   child: Text(
                     'Voir tout',
                     style: TextStyle(
@@ -53,122 +58,153 @@ class PopularServices extends StatelessWidget {
             ),
           ),
           SizedBox(height: screenHeight * 0.01),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              // Calculate card height based on available space
-              final cardHeight = constraints.maxHeight * 0.25 < 140
-                  ? 140.0
-                  : constraints.maxHeight * 0.25 > 180
-                      ? 180.0
-                      : constraints.maxHeight * 0.25;
-              return SizedBox(
-                height: cardHeight,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.01, vertical: screenHeight * 0.01),
-                  itemCount: popularServices.length,
-                  itemBuilder: (context, index) {
-                    final service = popularServices[index];
-                    return _buildPopularServiceCard(service, context, cardHeight);
-                  },
-                ),
-              );
-            },
-          ),
+          if (displayProducts.isEmpty)
+            const Center(child: Text('Aucun service populaire pour le moment'))
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardHeight = 200.0;
+                return SizedBox(
+                  height: cardHeight,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.01,
+                        vertical: screenHeight * 0.01),
+                    itemCount: displayProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = displayProducts[index];
+                      return _buildPopularProductCard(
+                          product, context, cardHeight);
+                    },
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildPopularServiceCard(
-      PopularService service, BuildContext context, double cardHeight) {
+  Widget _buildPopularProductCard(
+      Product product, BuildContext context, double cardHeight) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth < 600 ? 120 : 130;
-    final fontSize = screenWidth < 600 ? 12 : 14;
-    final smallFontSize = screenWidth < 600 ? 10 : 12;
+    final cardWidth = screenWidth < 600 ? 140 : 160;
 
     return Container(
-      width: cardWidth + 20,
-      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
+      width: cardWidth.toDouble(),
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.015),
       child: InkWell(
-        onTap: () => onServiceTap(service),
+        onTap: () => onServiceTap(product),
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: EdgeInsets.all(screenWidth * 0.04),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 12,
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: EdgeInsets.all(screenWidth * 0.03),
-                decoration: BoxDecoration(
-                  color: service.color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  service.icon,
-                  size: screenWidth < 600 ? 24 : 28,
-                  color: service.color,
-                ),
-              ),
-              SizedBox(height: screenWidth * 0.02),
-              Flexible(
-                child: Text(
-                  service.name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: fontSize - 0  ,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              SizedBox(height: screenWidth * 0.01),
-              Flexible(
-                child: Text(
-                  service.subtitle,
-                  style: TextStyle(
-                    fontSize: smallFontSize - 0 ,
-                    color: Colors.grey.shade600,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              SizedBox(height: screenWidth * 0.02),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: service.color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Populaire',
-                  style: TextStyle(
-                    fontSize: smallFontSize - 2,
-                    fontWeight: FontWeight.w600,
-                    color: service.color,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image or Video Thumbnail
+                Expanded(
+                  flex: 5,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        color: Colors.grey.shade100,
+                        child: product.getThumbnailUrl().isNotEmpty
+                            ? Image.network(
+                                product.getThumbnailUrl(),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.image, color: Colors.grey),
+                              )
+                            : const Icon(Icons.image, color: Colors.grey),
+                      ),
+                      GreenPromoLabel(product),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                // Details
+                Expanded(
+                  flex: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          product.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          product.category,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${product.numericPrice.toInt()} F',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryBlue,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Icon(Icons.star, color: Colors.amber, size: 12),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget GreenPromoLabel(Product product) {
+    if (product.promoLabel == null) return const SizedBox.shrink();
+    return Positioned(
+      top: 8,
+      right: 8,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          product.promoLabel!,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

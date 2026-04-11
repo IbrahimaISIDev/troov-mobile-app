@@ -1,4 +1,4 @@
-# troov_app
+# troov
 
 A new Flutter project.
 

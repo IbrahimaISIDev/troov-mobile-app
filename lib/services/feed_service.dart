@@ -6,7 +6,7 @@ import 'auth_service.dart';
 class FeedService {
   // Replace with actual base URL or import from constants
   // Replace with actual base URL or import from constants
-  static const String _baseUrl = AuthService.baseUrl;
+  static String _baseUrl = AuthService.baseUrl;
 
   Future<List<FeedItem>> getFeed({int page = 0, int size = 10}) async {
     final token = await AuthService().getToken();

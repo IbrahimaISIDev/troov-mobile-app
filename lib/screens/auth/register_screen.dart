@@ -31,7 +31,6 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  UserRole _selectedRole = UserRole.client;
   bool _acceptTerms = false;
 
   void _initAnimations() {
@@ -107,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen>
             builder: (context) => OtpCodeScreen(
               phone: _phoneController.text.trim(),
               isAccountActivation: true,
-              isProvider: _selectedRole == UserRole.provider,
+              isProvider: false,
             ),
           ),
         );
@@ -170,9 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     position: _slideAnimation,
                     child: Column(
                       children: [
-                        SizedBox(height: isSmallScreen ? 10 : 20),
                         _buildHeader(isSmallScreen),
-                        _buildRoleSelection(isSmallScreen),
                         _buildRegistrationForm(isSmallScreen),
                         _buildSocialLogin(isSmallScreen),
                         _buildLoginPrompt(isSmallScreen),
@@ -259,87 +256,6 @@ class _RegisterScreenState extends State<RegisterScreen>
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-
-  Widget _buildRoleSelection(bool isSmallScreen) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: isSmallScreen ? 16 : 20),
-      constraints: const BoxConstraints(maxWidth: 400),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-            child: Text(
-              'Je souhaite m\'inscrire en tant que :',
-              style: TextStyle(
-                fontSize: isSmallScreen ? 14 : 16,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryBlue,
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<UserRole>(
-                  title: Text(
-                    'Client',
-                    style: TextStyle(fontSize: isSmallScreen ? 13 : 14),
-                  ),
-                  subtitle: Text(
-                    'Rechercher des services',
-                    style: TextStyle(fontSize: isSmallScreen ? 11 : 12),
-                  ),
-                  value: UserRole.client,
-                  groupValue: _selectedRole,
-                  activeColor: AppTheme.primaryBlue,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: isSmallScreen ? 4 : 8),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedRole = value!;
-                    });
-                  },
-                ),
-              ),
-              Expanded(
-                child: RadioListTile<UserRole>(
-                  title: Text(
-                    'Prestataire',
-                    style: TextStyle(fontSize: isSmallScreen ? 13 : 14),
-                  ),
-                  subtitle: Text(
-                    'Offrir des services',
-                    style: TextStyle(fontSize: isSmallScreen ? 11 : 12),
-                  ),
-                  value: UserRole.provider,
-                  groupValue: _selectedRole,
-                  activeColor: AppTheme.primaryBlue,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: isSmallScreen ? 4 : 8),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedRole = value!;
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 

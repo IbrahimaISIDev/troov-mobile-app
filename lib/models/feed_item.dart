@@ -1,7 +1,7 @@
 class FeedItem {
   final String id;
   final String description;
-  final List<String> mediaUrls;
+  final String? mediaUrl;
   final String category;
   final FeedAuthor author;
   final FeedStats stats;
@@ -11,7 +11,7 @@ class FeedItem {
   FeedItem({
     required this.id,
     required this.description,
-    required this.mediaUrls,
+    this.mediaUrl,
     required this.category,
     required this.author,
     required this.stats,
@@ -23,7 +23,7 @@ class FeedItem {
     return FeedItem(
       id: json['id'],
       description: json['description'] ?? '',
-      mediaUrls: List<String>.from(json['mediaUrls'] ?? []),
+      mediaUrl: json['mediaUrl'],
       category: json['category'] ?? 'Général',
       author: FeedAuthor.fromJson(json['author']),
       stats: FeedStats(
@@ -38,8 +38,8 @@ class FeedItem {
 
   // Helper to determine if the first media is a video
   bool get isVideo {
-    if (mediaUrls.isEmpty) return false;
-    final url = mediaUrls.first.toLowerCase();
+    if (mediaUrl == null || mediaUrl!.isEmpty) return false;
+    final url = mediaUrl!.toLowerCase();
     return url.endsWith('.mp4') ||
         url.endsWith('.mov') ||
         url.endsWith('.avi') ||

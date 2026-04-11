@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/theme.dart';
-import 'package:intl/intl.dart';
 
 class SecuritySettingsScreen extends StatefulWidget {
   const SecuritySettingsScreen({Key? key}) : super(key: key);

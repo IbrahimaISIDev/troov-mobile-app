@@ -1,6 +1,6 @@
 {
-    "name": "troov_app",
-    "short_name": "troov_app",
+    "name": "troov",
+    "short_name": "troov",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import '../../models/service_model.dart';
 
 class ServiceCategories extends StatelessWidget {
+  final List<ServiceCategory>? categories;
   final Function(ServiceCategory) onCategoryTap;
 
   const ServiceCategories({
     super.key,
+    this.categories,
     required this.onCategoryTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final categories = ServiceData.getCategories();
+    final displayCategories = categories ?? ServiceData.getCategories();
     final screenWidth = MediaQuery.of(context).size.width;
 
     // Dynamically adjust crossAxisCount and childAspectRatio based on screen width
@@ -47,9 +49,9 @@ class ServiceCategories extends StatelessWidget {
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
-            itemCount: categories.length,
+            itemCount: displayCategories.length,
             itemBuilder: (context, index) {
-              final category = categories[index];
+              final category = displayCategories[index];
               return _buildCategoryCard(category, context);
             },
           ),

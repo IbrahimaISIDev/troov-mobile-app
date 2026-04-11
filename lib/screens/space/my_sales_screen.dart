@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../services/activity_service.dart';
+import '../../services/provider_service.dart';
+import '../../models/activity_model.dart';
 
 class MySalesScreen extends StatefulWidget {
   const MySalesScreen({Key? key}) : super(key: key);
@@ -10,11 +14,65 @@ class MySalesScreen extends StatefulWidget {
 class _MySalesScreenState extends State<MySalesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ActivityService _activityService = ActivityService();
+  final ProviderService _providerService = ProviderService();
+  
+  List<Activity> _allSales = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadSales();
+  }
+
+  Future<void> _loadSales() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final provider = await _providerService.getCurrentProvider();
+      if (provider != null) {
+        final sales = await _activityService.getActivitiesByProvider(provider.id!);
+        setState(() {
+          _allSales = sales.where((a) => a.type == ActivityType.SALE).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = "Profil prestataire non trouvé.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = "Erreur lors du chargement des ventes: $e";
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<Activity> _getFilteredSales(String statusGroup) {
+    switch (statusGroup) {
+      case 'pending':
+        return _allSales.where((a) => a.status == ActivityStatus.NEW || a.status == ActivityStatus.PENDING).toList();
+      case 'completed':
+        return _allSales.where((a) => a.status == ActivityStatus.SOLD || a.status == ActivityStatus.DELIVERED).toList();
+      case 'cancelled':
+        return _allSales.where((a) => a.status == ActivityStatus.CANCELLED).toList();
+      default:
+        return [];
+    }
   }
 
   @override
@@ -39,58 +97,60 @@ class _MySalesScreenState extends State<MySalesScreen>
           ],
         ),
       ),
-      body: Stack(
-        children: [
-          TabBarView(
-            controller: _tabController,
-            children: [
-              _buildSalesList(status: 'pending'),
-              _buildSalesList(status: 'completed'),
-              _buildSalesList(status: 'cancelled'),
-            ],
-          ),
-          // Floating "Publish Sale" Button (similar to Publish Troov)
-          Positioned(
-            bottom: 30,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: FloatingActionButton.extended(
-                onPressed: () => _showCreateSaleModal(context),
-                backgroundColor: Colors.black,
-                icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
-                label: const Text('Nouvelle Vente',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                elevation: 5,
-              ),
-            ),
-          ),
-        ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)))
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildSalesList(statusGroup: 'pending'),
+                    _buildSalesList(statusGroup: 'completed'),
+                    _buildSalesList(statusGroup: 'cancelled'),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildSalesList({required String statusGroup}) {
+    final filteredSales = _getFilteredSales(statusGroup);
+    
+    if (filteredSales.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.shopping_bag_outlined, size: 60, color: Colors.grey.shade300),
+            const SizedBox(height: 10),
+            Text('Aucune vente dans cette catégorie', style: TextStyle(color: Colors.grey.shade500)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadSales,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        itemCount: filteredSales.length,
+        itemBuilder: (context, index) {
+          return _buildSaleCard(context, filteredSales[index]);
+        },
       ),
     );
   }
 
-  Widget _buildSalesList({required String status}) {
-    return ListView.builder(
-      padding:
-          const EdgeInsets.fromLTRB(16, 16, 16, 100), // Bottom padding for FAB
-      itemCount: 4,
-      itemBuilder: (context, index) {
-        return _buildSaleCard(context, index, status);
-      },
-    );
-  }
-
-  Widget _buildSaleCard(BuildContext context, int index, String status) {
+  Widget _buildSaleCard(BuildContext context, Activity activity) {
     Color statusColor;
     String statusText;
 
-    switch (status) {
-      case 'completed':
+    switch (activity.status) {
+      case ActivityStatus.SOLD:
+      case ActivityStatus.DELIVERED:
         statusColor = Colors.green;
         statusText = 'Vendu';
         break;
-      case 'cancelled':
+      case ActivityStatus.CANCELLED:
         statusColor = Colors.red;
         statusText = 'Annulé';
         break;
@@ -99,8 +159,17 @@ class _MySalesScreenState extends State<MySalesScreen>
         statusText = 'En cours';
     }
 
+    final String title = activity.product?.title ?? 'Produit inconnu';
+    final String price = activity.product?.price != null 
+        ? '${NumberFormat("#,###", "fr_FR").format(activity.product!.price)} FCFA' 
+        : 'Prix variable';
+    final String date = DateFormat('dd/MM/yyyy HH:mm').format(activity.createdAt);
+    final String imageUrl = (activity.product?.images != null && activity.product!.images.isNotEmpty)
+        ? activity.product!.images.first
+        : 'https://via.placeholder.com/150';
+
     return GestureDetector(
-      onTap: () => _showSaleDetail(context, index),
+      onTap: () => _showSaleDetail(context, activity),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -119,53 +188,48 @@ class _MySalesScreenState extends State<MySalesScreen>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left: Square Image
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
-                'https://picsum.photos/150?random=$index',
+                imageUrl,
                 width: 90,
                 height: 90,
                 fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 12),
-            // Right: Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title & Price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Expanded(
-                          child: Text('Meuble de rangement',
-                              style: TextStyle(
+                          child: Text(title,
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 14),
                               overflow: TextOverflow.ellipsis)),
-                      Text('25 000 FCFA',
-                          style: TextStyle(
+                      Text(price,
+                          style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 14)),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // Date & Ref
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('26/11/2025 09:23',
+                      Text(date,
                           style: TextStyle(
                               color: Colors.blue.shade700,
                               fontSize: 12,
                               fontWeight: FontWeight.w500)),
-                      Text('G923C2L',
+                      Text('ID: ${activity.id.substring(0, 8)}',
                           style: TextStyle(
                               color: Colors.grey.shade500, fontSize: 11)),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Status & Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -190,90 +254,7 @@ class _MySalesScreenState extends State<MySalesScreen>
     );
   }
 
-  void _showCreateSaleModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Créer une vente',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context)),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    // Mock Form
-                    _buildFormInput('Titre du produit', Icons.tag),
-                    const SizedBox(height: 15),
-                    _buildFormInput('Prix (FCFA)', Icons.money),
-                    const SizedBox(height: 15),
-                    _buildFormInput('Description', Icons.description,
-                        maxLines: 3),
-                    const SizedBox(height: 20),
-                    Container(
-                      height: 150,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
-                          child: Icon(Icons.add_a_photo,
-                              size: 40, color: Colors.grey)),
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black),
-                        child: const Text('Mettre en vente'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFormInput(String label, IconData icon, {int maxLines = 1}) {
-    return TextField(
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  void _showSaleDetail(BuildContext context, int index) {
+  void _showSaleDetail(BuildContext context, Activity activity) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -297,13 +278,14 @@ class _MySalesScreenState extends State<MySalesScreen>
             const Text('Détails de la vente',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            // Client Info similar to My Space
             ListTile(
-              leading: const CircleAvatar(
-                  backgroundImage:
-                      NetworkImage('https://picsum.photos/100?user=client')),
-              title: const Text('Client: Modou Ndiaye'),
-              subtitle: const Text('+221 77 000 00 00'),
+              leading: CircleAvatar(
+                  backgroundImage: activity.user?.profileImage != null 
+                      ? NetworkImage(activity.user!.profileImage!) 
+                      : null,
+                  child: activity.user?.profileImage == null ? const Icon(Icons.person) : null),
+              title: Text('Client: ${activity.user?.pseudo ?? 'Utilisateur'}'),
+              subtitle: Text(activity.user?.phone ?? 'Pas de numéro'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -320,19 +302,19 @@ class _MySalesScreenState extends State<MySalesScreen>
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(20),
-                children: const [
-                  Text('Récapitulatif',
+                children: [
+                  const Text('Récapitulatif',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 10),
-                  Text('Produit: Meuble de rangement'),
-                  Text('Prix: 25 000 FCFA'),
-                  Text('Date: 26/11/2025'),
-                  SizedBox(height: 20),
-                  Text('Adresse de livraison',
+                  const SizedBox(height: 10),
+                  Text('Produit: ${activity.product?.title ?? 'N/A'}'),
+                  Text('Prix: ${activity.product?.price != null ? NumberFormat("#,###", "fr_FR").format(activity.product!.price) : '0'} FCFA'),
+                  Text('Date: ${DateFormat('dd/MM/yyyy HH:mm').format(activity.createdAt)}'),
+                  const SizedBox(height: 20),
+                  const Text('Statut actuel',
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text('Dakar, Liberté 6, Villa 123'),
+                  Text(activity.status.toString().split('.').last),
                 ],
               ),
             ),

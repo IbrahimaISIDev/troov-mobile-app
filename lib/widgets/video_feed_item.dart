@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:video_player/video_player.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/product.dart';
 import '../services/global_video_cache.dart';
-import '../services/cart_service.dart';
 import 'comments_modal.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../services/post_service.dart';
 import '../screens/services/service_provider_detail.dart';
 import '../models/service_model.dart';
 
@@ -26,22 +27,48 @@ class VideoFeedItem extends StatefulWidget {
 
 class _VideoFeedItemState extends State<VideoFeedItem> {
   // Product state
-  int _quantity = 1;
-  bool _includeInstallation = false;
   bool _isDescriptionExpanded = false; // Expand description
+
+  // Social state
+  late int _likeCount;
+  late int _viewCount;
+  late int _commentCount;
+  late bool _isLiked;
 
   // Video controller
   VideoPlayerController? _controller;
   bool _isMuted = true; // Default muted like TikTok
   bool _showControls = false; // Show pause/play overlay
-  bool _isLiked = false; // Like state
   bool _showHeart = false; // Show heart animation
   Timer? _tapTimer; // Timer for single/double tap distinction
+
+  bool get _isVideo =>
+      widget.product.videoUrl.toLowerCase().contains('.mp4') ||
+      widget.product.videoUrl.toLowerCase().contains('.mov') ||
+      widget.product.videoUrl.toLowerCase().contains('.m4v');
 
   @override
   void initState() {
     super.initState();
-    _loadVideo();
+    _likeCount = widget.product.likeCount;
+    _viewCount = widget.product.viewCount;
+    _commentCount = widget.product.commentCount;
+    _isLiked = widget.product.isLiked;
+
+    if (_isVideo) {
+      _loadVideo();
+    }
+
+    if (widget.isFocused) {
+      _incrementView();
+    }
+  }
+
+  void _incrementView() {
+    PostService().viewPost(widget.product.id);
+    setState(() {
+      _viewCount++;
+    });
   }
 
   @override
@@ -49,9 +76,14 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.isFocused && !oldWidget.isFocused) {
-      GlobalVideoCache.play(widget.product.videoUrl, ownerId: toString());
+      _incrementView();
+      if (_isVideo) {
+        GlobalVideoCache.play(widget.product.videoUrl, ownerId: toString());
+      }
     } else if (!widget.isFocused && oldWidget.isFocused) {
-      GlobalVideoCache.pause(widget.product.videoUrl, ownerId: toString());
+      if (_isVideo) {
+        GlobalVideoCache.pause(widget.product.videoUrl, ownerId: toString());
+      }
     }
   }
 
@@ -104,27 +136,41 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       // Start timer for single tap
       _tapTimer = Timer(const Duration(milliseconds: 300), () {
         // Single tap action confirmed
-        _togglePlayPause();
-        setState(() {
-          _showControls = true;
-        });
-        // Hide controls after 1 second
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            setState(() {
-              _showControls = false;
-            });
-          }
-        });
+        if (_isVideo) {
+          _togglePlayPause();
+          setState(() {
+            _showControls = true;
+          });
+          // Hide controls after 1 second
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              setState(() {
+                _showControls = false;
+              });
+            }
+          });
+        }
       });
     }
   }
 
+  final PostService _postService = PostService();
+
   void _handleDoubleTap() {
-    setState(() {
-      _isLiked = !_isLiked;
-      _showHeart = true;
-    });
+    if (!_isLiked) {
+      _postService.toggleLike(widget.product.id);
+      setState(() {
+        _isLiked = true;
+        _likeCount++;
+        _showHeart = true;
+      });
+    } else {
+      _postService.toggleLike(widget.product.id);
+      setState(() {
+        _isLiked = false;
+        _likeCount--;
+      });
+    }
 
     // Hide heart animation after 1 second
     Future.delayed(const Duration(seconds: 1), () {
@@ -142,43 +188,18 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsModal(
-        productId: _currentProduct.id,
-        productTitle: _currentProduct.title,
+        productId: widget.product.id,
+        productTitle: widget.product.title,
       ),
     );
   }
 
   void _handleShare() {
+    _postService.sharePost(widget.product.id);
     Share.share(
-      'Découvrez ${_currentProduct.title} à ${_currentProduct.price} !\n\nLivraison ${_currentProduct.deliveryFee == 0 ? "GRATUITE" : "disponible"}',
-      subject: _currentProduct.title,
+      'Découvrez ${widget.product.title} sur Troov !\n\n${widget.product.description}',
+      subject: widget.product.title,
     );
-  }
-
-  Product get _currentProduct => widget.product;
-
-  void _handleAddToCart() {
-    CartService().addProduct(
-      _currentProduct,
-      quantity: _quantity,
-      includeInstallation: _includeInstallation,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${_currentProduct.title} ajouté au panier (x$_quantity)',
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-
-    // Reset and hide options
-    setState(() {
-      _quantity = 1;
-      _includeInstallation = false;
-    });
   }
 
   void _navigateToProfile() {
@@ -186,15 +207,15 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
     // We create a mock provider since Product doesn't have one yet,
     // assuming the product seller is the provider.
     final provider = ServiceProvider(
-      id: 'provider_${_currentProduct.id}',
-      name: 'Vendeur ${_currentProduct.title}',
+      id: 'provider_${widget.product.id}',
+      name: 'Vendeur ${widget.product.title}',
       rating: 4.8,
       distance: 2.5,
       reviewCount: 120,
       profileImage: 'https://i.pravatar.cc/150?img=3', // Same as avatar
-      specialties: [_currentProduct.category, 'Vente', 'Accessoires'],
+      specialties: [widget.product.category, 'Vente', 'Accessoires'],
       description:
-          'Spécialiste en ${_currentProduct.category}. Nous proposons les meilleurs produits de la région avec un service client exceptionnel.',
+          'Spécialiste en ${widget.product.category}. Nous proposons les meilleurs produits de la région avec un service client exceptionnel.',
       phone: '+221 77 000 00 00',
       address: 'Dakar, Sénégal',
       isVerified: true,
@@ -224,7 +245,9 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   void dispose() {
     // Pause current video
     // Pause with reference counting (safe now)
-    GlobalVideoCache.pause(_currentProduct.videoUrl, ownerId: toString());
+    if (_isVideo) {
+      GlobalVideoCache.pause(widget.product.videoUrl, ownerId: toString());
+    }
     // Don't dispose controllers - they're managed by GlobalVideoCache
     super.dispose();
   }
@@ -235,27 +258,51 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Video Display with tap controls
+          // Video/Image Display with tap controls
           GestureDetector(
             onTap: _handleTap,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Video Background
-                if (_controller != null && _controller!.value.isInitialized)
-                  FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: _controller!.value.size.width,
-                      height: _controller!.value.size.height,
-                      child: VideoPlayer(_controller!),
-                    ),
-                  )
+                // Media Background
+                if (_isVideo)
+                  if (_controller != null && _controller!.value.isInitialized)
+                    FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: _controller!.value.size.width,
+                        height: _controller!.value.size.height,
+                        child: VideoPlayer(_controller!),
+                      ),
+                    )
+                  else
+                    Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: widget.product.getThumbnailUrl(),
+                          fit: BoxFit.cover,
+                        ),
+                        const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                      ],
+                    )
                 else
-                  Container(
-                    color: Colors.grey[900],
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+                  // It's an image
+                  CachedNetworkImage(
+                    imageUrl: widget.product.videoUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[900],
+                      child: const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[900],
+                      child: const Icon(Icons.broken_image,
+                          color: Colors.white, size: 50),
                     ),
                   ),
 
@@ -323,7 +370,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
             ),
           ),
 
-          // Top Header - EXACTLY like ProductPopup (but without close button to avoid overflow)
+          // Top Header
           Positioned(
             top: 0,
             left: 0,
@@ -352,7 +399,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
             ),
           ),
 
-          // Product Info Overlay (Bottom) - EXACTLY like ProductPopup
+          // Product Info Overlay (Bottom)
           Positioned(
             bottom: 0,
             left: 0,
@@ -372,167 +419,98 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
               child: SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Product info with fixed width (left-aligned)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width *
-                              0.7, // 70% width
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title Row
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _currentProduct.title,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-
-                              // Description (expandable with scroll)
-                              if (_currentProduct.description.isNotEmpty) ...[
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _isDescriptionExpanded =
-                                          !_isDescriptionExpanded;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.05),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: _isDescriptionExpanded
-                                                  ? Container(
-                                                      constraints:
-                                                          const BoxConstraints(
-                                                        maxHeight: 150,
-                                                      ),
-                                                      child:
-                                                          SingleChildScrollView(
-                                                        child: Text(
-                                                          _currentProduct
-                                                              .description,
-                                                          style: TextStyle(
-                                                            color: Colors
-                                                                .grey[300],
-                                                            fontSize: 14,
-                                                            height: 1.5,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  : Text(
-                                                      _currentProduct
-                                                          .description,
-                                                      style: TextStyle(
-                                                        color: Colors.grey[300],
-                                                        fontSize: 14,
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Icon(
-                                              _isDescriptionExpanded
-                                                  ? Icons.remove_circle_outline
-                                                  : Icons.add_circle_outline,
-                                              color: Colors.white,
-                                              size: 20,
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Action Buttons Row
+                      // User Info Row
                       Row(
                         children: [
-                          // Commander Button
+                          GestureDetector(
+                            onTap: _navigateToProfile,
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.grey,
+                              backgroundImage: const CachedNetworkImageProvider(
+                                  'https://i.pravatar.cc/150?img=3'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
                           Expanded(
-                            child: SizedBox(
-                              height: 56,
-                              child: ElevatedButton(
-                                onPressed: _handleAddToCart,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                  elevation: 4,
-                                ),
-                                child: const Text(
-                                  'Commander',
-                                  style: TextStyle(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Vendeur ${widget.product.title}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          // Profile Avatar
-                          GestureDetector(
-                            onTap: _navigateToProfile,
-                            child: Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const CircleAvatar(
-                                backgroundColor: Colors.grey,
-                                backgroundImage: NetworkImage(
-                                    'https://i.pravatar.cc/150?img=3'), // Mock profile
-                                child: Icon(Icons.person, color: Colors.white),
-                              ),
+                                if (widget.product.category.isNotEmpty)
+                                  Text(
+                                    widget.product.category,
+                                    style: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 12),
+
+                      // Description (expandable with scroll)
+                      if (widget.product.description.isNotEmpty) ...[
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isDescriptionExpanded = !_isDescriptionExpanded;
+                            });
+                          },
+                          child: Container(
+                            constraints: BoxConstraints(
+                              maxWidth:
+                                  MediaQuery.of(context).size.width * 0.75,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _isDescriptionExpanded
+                                    ? Container(
+                                        constraints: const BoxConstraints(
+                                          maxHeight: 150,
+                                        ),
+                                        child: SingleChildScrollView(
+                                          child: Text(
+                                            widget.product.description,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        widget.product.description,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -543,32 +521,34 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
           // Social Buttons (Right side - TikTok style)
           Positioned(
             right: 8,
-            bottom: 120, // Moved up slightly
+            bottom: 100,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildSocialButton(
                   icon: Icons.remove_red_eye,
-                  label: '1.2k',
+                  label: _viewCount > 999
+                      ? '${(_viewCount / 1000).toStringAsFixed(1)}k'
+                      : '$_viewCount',
                   onTap: () {},
                 ),
                 const SizedBox(height: 16),
                 _buildSocialButton(
                   icon: _isLiked ? Icons.favorite : Icons.favorite_border,
-                  label: _isLiked ? '106' : '105',
+                  label: '$_likeCount',
                   color: _isLiked ? Colors.red : null,
                   onTap: _handleDoubleTap,
                 ),
                 const SizedBox(height: 16),
                 _buildSocialButton(
                   icon: Icons.comment_outlined,
-                  label: '12',
+                  label: '$_commentCount',
                   onTap: _showComments,
                 ),
                 const SizedBox(height: 16),
                 _buildSocialButton(
                   icon: Icons.share_outlined,
-                  label: '34',
+                  label: 'Partager',
                   onTap: _handleShare,
                 ),
               ],

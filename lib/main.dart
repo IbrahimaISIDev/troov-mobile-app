@@ -6,13 +6,18 @@ import 'screens/welcome_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/settings/server_config_screen.dart';
 import 'utils/theme.dart';
 import 'utils/localization.dart';
 
 import 'services/auth_service.dart';
+import 'services/config_service.dart';
 import 'screens/auth/app_lock_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Charger la configuration du serveur au démarrage
+  await ConfigService.loadConfig();
   runApp(MyApp());
 }
 
@@ -137,6 +142,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               isDarkMode: _isDarkMode,
               currentLocale: _locale,
             ),
+        '/server-config': (context) => ServerConfigScreen(),
       },
     );
   }

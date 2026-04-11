@@ -2,37 +2,41 @@ class User {
   final String id;
   final String email;
   final String? phone;
+  final String? phoneNumber;
   final String firstName;
   final String lastName;
   final String? profileImage;
   final UserRole role;
   final bool isVerified;
   final DateTime createdAt;
-  final double balance; // Added balance
   final UserLocation? location;
-  final String? pseudo; // Ajouté
-  final List<String>? preferences; // Ajouté
-  final List<String>? paymentMethods; // Ajouté
-  final List<String> languages;
+  final String? pseudo;
+  final List<String>? preferences;
+  final String? acquisitionSource;
+  final String? referralCode;
+
+  // Legacy fields to suppress screen compilation errors
+  final double balance;
+  final List<String> paymentMethods;
 
   User({
     required this.id,
     required this.email,
     this.phone,
+    this.phoneNumber,
     required this.firstName,
     required this.lastName,
     this.profileImage,
     required this.role,
     this.isVerified = false,
     required this.createdAt,
-    this.balance = 0.0, // Default to 0.0
     this.location,
     this.pseudo,
     this.preferences,
-    this.paymentMethods,
-    this.languages = const ['fr'],
-    this.accountType = AccountType.essential,
-    this.subscriptionStatus = SubscriptionStatus.active,
+    this.acquisitionSource,
+    this.referralCode,
+    this.balance = 0.0,
+    this.paymentMethods = const [],
   });
 
   String get fullName => '$firstName $lastName';
@@ -42,6 +46,7 @@ class User {
       id: json['id'],
       email: json['email'],
       phone: json['phone'],
+      phoneNumber: json['phoneNumber'] ?? json['phone'],
       firstName: json['firstName'] ?? json['prenom'] ?? '',
       lastName: json['lastName'] ?? json['nom'] ?? '',
       profileImage: json['profileImage'] ?? json['photoUrl'],
@@ -55,7 +60,6 @@ class User {
       createdAt: DateTime.parse(json['createdAt'] ??
           json['dateCreation'] ??
           DateTime.now().toIso8601String()),
-      balance: (json['balance'] ?? 0.0).toDouble(), // Parse balance
       location: json['location'] != null
           ? UserLocation.fromJson(json['location'])
           : null,
@@ -63,18 +67,8 @@ class User {
       preferences: json['preferences'] != null
           ? List<String>.from(json['preferences'])
           : [],
-      paymentMethods: json['paymentMethods'] != null
-          ? List<String>.from(json['paymentMethods'])
-          : [],
-      languages: List<String>.from(json['languages'] ?? ['fr']),
-      accountType: AccountType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['accountType'],
-        orElse: () => AccountType.essential,
-      ),
-      subscriptionStatus: SubscriptionStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['subscriptionStatus'],
-        orElse: () => SubscriptionStatus.active,
-      ),
+      acquisitionSource: json['acquisitionSource'],
+      referralCode: json['referralCode'],
     );
   }
 
@@ -83,6 +77,7 @@ class User {
       'id': id,
       'email': email,
       'phone': phone,
+      'phoneNumber': phoneNumber,
       'firstName': firstName,
       'lastName': lastName,
       'profileImage': profileImage,
@@ -92,23 +87,13 @@ class User {
       'location': location?.toJson(),
       'pseudo': pseudo,
       'preferences': preferences,
-      'paymentMethods': paymentMethods,
-      'languages': languages,
-      'accountType': accountType.toString().split('.').last,
-      'subscriptionStatus': subscriptionStatus.toString().split('.').last,
+      'acquisitionSource': acquisitionSource,
+      'referralCode': referralCode,
     };
   }
-
-  // New fields
-  final AccountType accountType;
-  final SubscriptionStatus subscriptionStatus;
 }
 
-enum UserRole { client, provider }
-
-enum AccountType { essential, pro, business }
-
-enum SubscriptionStatus { active, inactive, past_due }
+enum UserRole { client, provider, admin, dev }
 
 enum ServiceCategory {
   cleaning,
@@ -159,62 +144,4 @@ class UserLocation {
   }
 }
 
-class ProviderProfile {
-  final String userId;
-  final String description;
-  final List<String> skills;
-  final List<ServiceCategory> categories;
-  final double hourlyRate;
-  final bool isAvailable;
-  final List<String> photos;
-  final double rating;
-  final int reviewCount;
-  final Map<String, bool> availability; // jour -> disponible
-
-  ProviderProfile({
-    required this.userId,
-    required this.description,
-    required this.skills,
-    required this.categories,
-    required this.hourlyRate,
-    this.isAvailable = true,
-    this.photos = const [],
-    this.rating = 0.0,
-    this.reviewCount = 0,
-    this.availability = const {},
-  });
-
-  factory ProviderProfile.fromJson(Map<String, dynamic> json) {
-    return ProviderProfile(
-      userId: json['userId'],
-      description: json['description'],
-      skills: List<String>.from(json['skills']),
-      categories: (json['categories'] as List)
-          .map((e) => ServiceCategory.values
-              .firstWhere((cat) => cat.toString() == 'ServiceCategory.$e'))
-          .toList(),
-      hourlyRate: json['hourlyRate'].toDouble(),
-      isAvailable: json['isAvailable'] ?? true,
-      photos: List<String>.from(json['photos'] ?? []),
-      rating: json['rating']?.toDouble() ?? 0.0,
-      reviewCount: json['reviewCount'] ?? 0,
-      availability: Map<String, bool>.from(json['availability'] ?? {}),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'description': description,
-      'skills': skills,
-      'categories':
-          categories.map((e) => e.toString().split('.').last).toList(),
-      'hourlyRate': hourlyRate,
-      'isAvailable': isAvailable,
-      'photos': photos,
-      'rating': rating,
-      'reviewCount': reviewCount,
-      'availability': availability,
-    };
-  }
-}
+// ProviderProfile removed as it is now in provider_model.dart

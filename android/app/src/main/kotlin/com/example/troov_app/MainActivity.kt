@@ -1,4 +1,4 @@
-package com.example.troov_app
+package com.example.troov
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

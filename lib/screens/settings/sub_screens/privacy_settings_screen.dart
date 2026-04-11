@@ -16,7 +16,6 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   // Existing toggles
   bool _profileVisible = true;
   bool _statusVisible = true;
-  bool _readReceipts = true;
 
   // New Preferences
   List<String> _selectedServices = [];
@@ -51,7 +50,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
       if (user != null) {
         setState(() {
           _selectedServices = List<String>.from(user.preferences ?? []);
-          _selectedPayments = List<String>.from(user.paymentMethods ?? []);
+          _selectedPayments = List<String>.from(user.paymentMethods);
         });
       }
     } catch (e) {

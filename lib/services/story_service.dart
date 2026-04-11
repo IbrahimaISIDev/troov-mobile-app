@@ -69,27 +69,50 @@ class StoryService {
   }
 
   Future<void> postStatus(String type, String content,
-      {String? caption, String? color}) async {
+      {String? caption, String? color, String? filePath}) async {
     try {
       final token = await _authService.getToken();
       if (token == null) return;
 
-      final body = {
+      final statusData = {
         'type': type, // TEXT, IMAGE, VIDEO
-        'content': content,
+        'content': content, // URL if already uploaded, or text
         'caption': caption,
         'backgroundColor': color,
-        'visibility': 'PUBLIC' // Default
+        'visibility': 'PUBLIC'
       };
 
-      await http.post(
-        Uri.parse('$baseUrl/v1/statuses'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(body),
-      );
+      if (filePath != null && filePath.isNotEmpty) {
+        // Multipart request
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('$baseUrl/v1/statuses'),
+        );
+        request.headers['Authorization'] = 'Bearer $token';
+        
+        // Add file
+        request.files.add(await http.MultipartFile.fromPath('file', filePath));
+        
+        // Add status JSON as a string part
+        request.fields['status'] = jsonEncode(statusData);
+
+        var streamedResponse = await request.send();
+        var response = await http.Response.fromStream(streamedResponse);
+        
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          throw Exception('Failed to post status with file: ${response.body}');
+        }
+      } else {
+        // Regular JSON request
+        await http.post(
+          Uri.parse('$baseUrl/v1/statuses'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(statusData),
+        );
+      }
     } catch (e) {
       print('Error posting status: $e');
       throw e;

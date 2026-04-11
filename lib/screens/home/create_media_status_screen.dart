@@ -1,8 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../services/story_service.dart';
 
 class CreateMediaStatusScreen extends StatefulWidget {
-  final String mediaPath; // Path from picker (or mock)
+  final String mediaPath; // Path from picker
   final bool isVideo;
 
   const CreateMediaStatusScreen({
@@ -25,11 +26,12 @@ class _CreateMediaStatusScreenState extends State<CreateMediaStatusScreen> {
     setState(() => _isPosting = true);
 
     try {
-      // Create status atomically with media + caption
+      // Create status atomically with media file + caption
       await _storyService.postStatus(
         widget.isVideo ? "VIDEO" : "IMAGE",
-        widget.mediaPath,
+        "media", // Content is placeholder, backend will set it from file URL
         caption: _captionController.text.trim(),
+        filePath: widget.mediaPath,
       );
 
       if (mounted) {
@@ -38,7 +40,7 @@ class _CreateMediaStatusScreenState extends State<CreateMediaStatusScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erreur lors de la publication")));
+            const SnackBar(content: Text("Erreur lors de la publication")));
         setState(() => _isPosting = false);
       }
     }
@@ -52,24 +54,24 @@ class _CreateMediaStatusScreenState extends State<CreateMediaStatusScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.white),
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.crop, color: Colors.white),
+            icon: const Icon(Icons.crop, color: Colors.white),
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.emoji_emotions_outlined, color: Colors.white),
+            icon: const Icon(Icons.emoji_emotions_outlined, color: Colors.white),
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.title, color: Colors.white),
+            icon: const Icon(Icons.title, color: Colors.white),
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.edit, color: Colors.white),
+            icon: const Icon(Icons.edit, color: Colors.white),
             onPressed: () {},
           ),
         ],
@@ -80,10 +82,12 @@ class _CreateMediaStatusScreenState extends State<CreateMediaStatusScreen> {
           Center(
             child: widget.mediaPath.startsWith('http')
                 ? Image.network(widget.mediaPath, fit: BoxFit.contain)
-                : Image.asset(widget.mediaPath,
+                : Image.file(
+                    File(widget.mediaPath),
                     fit: BoxFit.contain,
                     errorBuilder: (ctx, err, stack) =>
-                        Icon(Icons.broken_image, color: Colors.grey, size: 50)),
+                        const Icon(Icons.broken_image, color: Colors.grey, size: 50),
+                  ),
           ),
 
           // Caption Input & Send
@@ -93,7 +97,7 @@ class _CreateMediaStatusScreenState extends State<CreateMediaStatusScreen> {
             right: 0,
             child: Container(
               color: Colors.black54,
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -103,13 +107,13 @@ class _CreateMediaStatusScreenState extends State<CreateMediaStatusScreen> {
                         color: Colors.white24,
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: TextField(
                         controller: _captionController,
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                         maxLines: 5,
                         minLines: 1,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           border: InputBorder.none,
                           hintText: "Ajouter une légende...",
                           hintStyle: TextStyle(color: Colors.white70),
@@ -119,17 +123,17 @@ class _CreateMediaStatusScreenState extends State<CreateMediaStatusScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   FloatingActionButton(
                     mini: true,
-                    backgroundColor: Color(0xFF00A884),
+                    backgroundColor: const Color(0xFF00A884),
+                    onPressed: _isPosting ? null : _postStatus,
                     child: _isPosting
-                        ? Padding(
+                        ? const Padding(
                             padding: EdgeInsets.all(8),
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2))
-                        : Icon(Icons.send, color: Colors.white, size: 20),
-                    onPressed: _isPosting ? null : _postStatus,
+                        : const Icon(Icons.send, color: Colors.white, size: 20),
                   ),
                 ],
               ),

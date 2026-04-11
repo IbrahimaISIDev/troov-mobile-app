@@ -431,7 +431,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final screenHeight = mediaQuery.size.height;
-    final screenWidth = mediaQuery.size.width;
 
     // Hauteur logique pour garder un ratio cohérent sur tous les écrans
     final layoutHeight = math.min(math.max(screenHeight, 640.0), 840.0);
@@ -461,9 +460,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final h = MediaQuery.of(context).size.height;
     final isVerySmall = h < 600;
     final isSmall = h < 700;
-
-    // Largeur max pour ressembler au mockup iPhone et centrer sur tablette
-    final maxContentWidth = 430.0;
 
     return Scaffold(
       backgroundColor: Colors.white,

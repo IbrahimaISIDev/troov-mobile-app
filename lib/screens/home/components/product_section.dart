@@ -88,10 +88,12 @@ class ProductSection extends StatelessWidget {
   }
 
   Widget _buildSimpleProductCard(String imagePath, double screenWidth, int index) {
+    final isNetworkImage = imagePath.startsWith('http') || imagePath.startsWith('https');
+    
     return GestureDetector(
       onTap: () => onProductTap(index),
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         width: screenWidth < 600 ? 140 : 120,
         height: screenWidth < 600 ? 140 : 120,
         margin: EdgeInsets.only(
@@ -104,9 +106,9 @@ class ProductSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.08),
               blurRadius: 8,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -115,24 +117,31 @@ class ProductSection extends StatelessWidget {
           child: Semantics(
             image: true,
             label: 'Produit ${index + 1}',
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                print("Erreur de chargement de l'image produit: $error");
-                return Container(
-                  color: Colors.grey.shade300,
-                  child: Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      size: screenWidth < 600 ? 35 : 40,
-                      color: Colors.white70,
-                    ),
-                  ),
-                );
-              },
-            ),
+            child: isNetworkImage 
+              ? Image.network(
+                  imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(screenWidth),
+                )
+              : Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(screenWidth),
+                ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorPlaceholder(double screenWidth) {
+    return Container(
+      color: Colors.grey.shade200,
+      child: Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          size: screenWidth < 600 ? 30 : 35,
+          color: Colors.grey.shade400,
         ),
       ),
     );
