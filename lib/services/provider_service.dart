@@ -56,10 +56,12 @@ class ProviderService {
             json.decode(utf8.decode(response.bodyBytes));
         return ProviderProfile.fromJson(data);
       }
-      return null;
+      
+      final errorData = json.decode(utf8.decode(response.bodyBytes));
+      throw Exception(errorData['message'] ?? 'Erreur serveur (${response.statusCode})');
     } catch (e) {
       print('ProviderService: Error creating provider: $e');
-      return null;
+      rethrow;
     }
   }
 

@@ -22,6 +22,7 @@ class Product {
   final int commentCount;
   final int viewCount;
   final bool isLiked;
+  final String? duration;
 
   final String? productCode;
   final String? status;
@@ -48,6 +49,7 @@ class Product {
     this.isLiked = false,
     this.productCode,
     this.status,
+    this.duration,
   });
 
   String getThumbnailUrl() {
@@ -85,11 +87,52 @@ class Product {
                 : description)
             : 'Sans titre');
 
+    // Map provider or author
+    ProviderProfile? provider;
+    if (json['provider'] != null) {
+      provider = ProviderProfile.fromJson(json['provider']);
+    } else {
+      // Reconstruct from author object or flat keys
+      final authorData = json['author'];
+      final String? authorId = authorData?['id']?.toString() ?? 
+                              json['authorId']?.toString() ?? 
+                              json['author_id']?.toString();
+      
+      if (authorId != null) {
+        String? displayName;
+        if (authorData != null) {
+          final first = authorData['firstName'] ?? authorData['prenom'];
+          final last = authorData['lastName'] ?? authorData['nom'];
+          final pseudo = authorData['pseudo'];
+          
+          if (first != null || last != null) {
+            displayName = '${first ?? ''} ${last ?? ''}'.trim();
+          } else if (pseudo != null) {
+            displayName = pseudo.toString();
+          }
+        }
+        
+        provider = ProviderProfile(
+          id: authorId,
+          agencyName: displayName ?? 'Utilisateur Troov',
+          logoUrl: authorData?['profileImage'] ?? authorData?['photoUrl'],
+        );
+      }
+    }
+
+    final categoryRaw = json['categoryName'] ??
+        (json['category'] is Map
+            ? (json['category']['name'] ?? json['category']['title'])
+            : json['category']?.toString());
+
+    if (categoryRaw == null || categoryRaw.toString().isEmpty) {
+      print(
+          'DEBUG: Product ${json['id']} has no category information! Mapping to "Service"');
+    }
+
     return Product(
       id: json['id']?.toString() ?? '',
-      provider: json['provider'] != null
-          ? ProviderProfile.fromJson(json['provider'])
-          : null,
+      provider: provider,
       categoryData: json['categoryData'] != null
           ? Category.fromJson(json['categoryData'])
           : null,
@@ -98,9 +141,7 @@ class Product {
       price: json['price'] != null ? '${json['price']} FCFA' : '',
       numericPrice: (json['price'] as num?)?.toDouble() ?? 0.0,
       images: json['images'] != null ? List<String>.from(json['images']) : (json['mediaUrl'] != null ? [json['mediaUrl'].toString()] : []),
-      category: json['categoryName'] ??
-          (json['category'] is Map ? (json['category']['name'] ?? json['category']['title']) : json['category'].toString()) ?? 
-          '',
+      category: categoryRaw?.toString() ?? 'Service',
       videoUrl: videoUrl,
       deliveryFee: 0.0,
       likeCount: json['likeCount'] ?? 0,
@@ -109,6 +150,7 @@ class Product {
       isLiked: json['liked'] ?? false,
       productCode: json['productCode'],
       status: json['status'],
+      duration: json['duration'],
     );
   }
 
@@ -120,6 +162,7 @@ class Product {
       'price': numericPrice,
       'categoryName': category,
       'images': images,
+      'duration': duration,
     };
   }
 }

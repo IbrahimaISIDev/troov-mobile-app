@@ -37,7 +37,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
 
   // Video controller
   VideoPlayerController? _controller;
-  bool _isMuted = true; // Default muted like TikTok
+  bool _isMuted = false; // Audio active by default
   bool _showControls = false; // Show pause/play overlay
   bool _showHeart = false; // Show heart animation
   Timer? _tapTimer; // Timer for single/double tap distinction
@@ -99,6 +99,7 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
 
         // Play video if focused AFTER loading
         if (widget.isFocused) {
+          _controller!.setVolume(_isMuted ? 0.0 : 1.0);
           GlobalVideoCache.play(widget.product.videoUrl, ownerId: toString());
         }
       }
@@ -203,31 +204,38 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
   }
 
   void _navigateToProfile() {
-    // Navigate to ServiceProviderDetail
-    // We create a mock provider since Product doesn't have one yet,
-    // assuming the product seller is the provider.
+    if (widget.product.provider == null) {
+      // Mock fallback if absolutely needed, but better to show a snackbar or do nothing
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil non disponible')),
+      );
+      return;
+    }
+
+    // Convert ProviderProfile to ServiceProvider (as expected by ServiceProviderDetail)
+    // NOTE: This conversion assumes ServiceProvider is the model used in ServiceProviderDetail
     final provider = ServiceProvider(
-      id: 'provider_${widget.product.id}',
-      name: 'Vendeur ${widget.product.title}',
-      rating: 4.8,
-      distance: 2.5,
-      reviewCount: 120,
-      profileImage: 'https://i.pravatar.cc/150?img=3', // Same as avatar
-      specialties: [widget.product.category, 'Vente', 'Accessoires'],
-      description:
-          'Spécialiste en ${widget.product.category}. Nous proposons les meilleurs produits de la région avec un service client exceptionnel.',
-      phone: '+221 77 000 00 00',
-      address: 'Dakar, Sénégal',
-      isVerified: true,
-      responseTime: '30 min',
-      completedJobs: 50,
+      id: widget.product.provider!.id ?? 'p_${widget.product.id}',
+      name: widget.product.provider!.agencyName ??
+          widget.product.provider!.user?.fullName ??
+          'Utilisateur Troov',
+      rating: widget.product.provider!.rating,
+      distance: widget.product.provider!.distance,
+      reviewCount: widget.product.provider!.reviewCount,
+      profileImage: widget.product.provider!.logoUrl ??
+          widget.product.provider!.user?.profileImage ??
+          '',
+      specialties: widget.product.provider!.specialties,
+      description: widget.product.provider!.bio ??
+          'Spécialiste en ${widget.product.category}.',
+      phone: widget.product.provider!.user?.phone ?? '',
+      address: widget.product.provider!.address ?? 'Sénégal',
+      isVerified: widget.product.provider!.isVerified,
+      responseTime: widget.product.provider!.responseTime ?? '30 min',
+      completedJobs: widget.product.provider!.totalMissions,
       hourlyRate: 0,
       availability: true,
-      portfolio: [
-        'https://picsum.photos/400/400',
-        'https://picsum.photos/401/400',
-        'https://picsum.photos/402/400',
-      ],
+      portfolio: const [],
     );
 
     Navigator.push(
@@ -380,18 +388,19 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    // Mute/Unmute button (TikTok style)
-                    IconButton(
-                      onPressed: _toggleMute,
-                      icon: Icon(
-                        _isMuted ? Icons.volume_off : Icons.volume_up,
-                        color: Colors.white,
-                        size: 28,
+                    // Mute/Unmute button (only if it's a video)
+                    if (_isVideo)
+                      IconButton(
+                        onPressed: _toggleMute,
+                        icon: Icon(
+                          _isMuted ? Icons.volume_off : Icons.volume_up,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black.withOpacity(0.5),
+                        ),
                       ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black.withOpacity(0.5),
-                      ),
-                    ),
                     const Spacer(),
                   ],
                 ),
@@ -431,9 +440,13 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                             onTap: _navigateToProfile,
                             child: CircleAvatar(
                               radius: 18,
-                              backgroundColor: Colors.grey,
-                              backgroundImage: const CachedNetworkImageProvider(
-                                  'https://i.pravatar.cc/150?img=3'),
+                              backgroundColor: Colors.white10,
+                              backgroundImage: (widget.product.provider?.logoUrl != null || widget.product.provider?.user?.profileImage != null)
+                                ? CachedNetworkImageProvider(widget.product.provider?.logoUrl ?? widget.product.provider?.user?.profileImage ?? '')
+                                : null,
+                              child: (widget.product.provider?.logoUrl == null && widget.product.provider?.user?.profileImage == null)
+                                ? const Icon(Icons.person, color: Colors.white54, size: 20)
+                                : null,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -442,7 +455,9 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Vendeur ${widget.product.title}',
+                                  widget.product.provider?.agencyName ??
+                                  widget.product.provider?.user?.fullName ??
+                                  'Utilisateur Troov',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,

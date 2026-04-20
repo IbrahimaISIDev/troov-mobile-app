@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -214,12 +215,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: EdgeInsets.all(isTroovTab ? 0 : 12),
                   child: ClipOval(
                     child: Image.asset(
-                      'assets/images/logo_troov-mini.jpeg',
+                      isTroovTab
+                          ? 'assets/images/logo_blanc.png'
+                          : 'assets/images/logo_bleu.png',
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
                           Icons.play_circle_fill_rounded,
-                          color: isTroovTab ? Colors.white : Colors.white,
+                          color: Colors.white,
                           size: 30,
                         );
                       },

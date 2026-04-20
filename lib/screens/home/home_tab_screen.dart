@@ -53,6 +53,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   List<cm.Category> _categories = [];
   bool _isLoadingStories = true;
   bool _isLoadingData = true;
+  bool _isProvider = false;
 
   @override
   void initState() {
@@ -70,10 +71,12 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   Future<void> _loadStories() async {
     setState(() => _isLoadingStories = true);
     try {
+      final provider = await _providerService.getCurrentProvider();
       final myStories = await _storyService.getMyStatuses();
       final otherStories = await _storyService.getOtherStatuses();
       if (mounted) {
         setState(() {
+          _isProvider = provider != null;
           _myStories = myStories;
           _otherStories = otherStories;
           _isLoadingStories = false;
@@ -370,20 +373,26 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       );
     }
 
+    final bool showMyStatus = _isProvider || _myStories.isNotEmpty;
+
+    if (!showMyStatus && _otherStories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       height: 110,
-      margin: EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 10),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        // Item 0 is "My Status". Subsequent items are others.
-        itemCount: 1 + _otherStories.length,
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        itemCount: (showMyStatus ? 1 : 0) + _otherStories.length,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemBuilder: (context, index) {
-          if (index == 0) {
+          if (showMyStatus && index == 0) {
             return _buildMyStatusItem();
           }
-          final story = _otherStories[index - 1];
-          return _buildStoryItem(story, index - 1);
+          final storyIndex = showMyStatus ? index - 1 : index;
+          final story = _otherStories[storyIndex];
+          return _buildStoryItem(story, storyIndex);
         },
       ),
     );
@@ -395,35 +404,37 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     // If has status, onTap should offer choice: View or Add.
 
     if (!hasActiveStatus) {
+      // If we are here, it means _isProvider is true (verified in _buildStoriesBar)
       return GestureDetector(
         onTap: _createStory,
         child: _buildAddStoryButton(),
       );
     }
 
-    // Has Status
     final first = _myStories.first;
-    // Check if we have a valid image URL for the user avatar (from story or logic)
-    // If no authorImage or it's empty, use fallback.
     return GestureDetector(
       onTap: () {
-        // Show menu to View or Add
+        if (!_isProvider) {
+          _openStory(_myStories, 0);
+          return;
+        }
+        
         showModalBottomSheet(
           context: context,
           builder: (context) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.visibility),
-                title: Text("Voir mon statut"),
+                leading: const Icon(Icons.visibility),
+                title: const Text("Voir mon statut"),
                 onTap: () {
                   Navigator.pop(context);
                   _openStory(_myStories, 0);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.add_a_photo),
-                title: Text("Ajouter au statut"),
+                leading: const Icon(Icons.add_a_photo),
+                title: const Text("Ajouter au statut"),
                 onTap: () {
                   Navigator.pop(context);
                   _createStory();
@@ -435,42 +446,43 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       },
       child: Container(
         width: 70,
-        margin: EdgeInsets.only(right: 12),
+        margin: const EdgeInsets.only(right: 12),
         child: Column(
           children: [
             Stack(
               children: [
                 StoryStatusAvatar(
                   imageUrl: first.authorImage,
-                  radius: 30, // 60px diameter
+                  radius: 30,
                   hasStory: true,
-                  isRead: true, // Use Grey for "My Status" usually
+                  isRead: true,
                   isSponsored: false,
-                  onTap: null, // Handled by parent GestureDetector
+                  onTap: null,
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
+                if (_isProvider)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
                     child: Container(
-                      padding: EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.add, size: 10, color: Colors.white),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.add, size: 10, color: Colors.white),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
-            SizedBox(height: 6),
-            Text(
+            const SizedBox(height: 6),
+            const Text(
               "Mon statut",
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal),
               overflow: TextOverflow.ellipsis,

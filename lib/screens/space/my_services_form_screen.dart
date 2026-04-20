@@ -4,6 +4,8 @@ import 'dart:io';
 import '../../services/product_service.dart';
 import '../../services/provider_service.dart';
 import '../../services/post_service.dart';
+import '../../services/category_service.dart';
+import '../../models/category_model.dart' as model;
 
 class MyServicesFormScreen extends StatefulWidget {
   const MyServicesFormScreen({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class _MyServicesFormScreenState extends State<MyServicesFormScreen> {
   final ProductService _productService = ProductService();
   final ProviderService _providerService = ProviderService();
   final PostService _postService = PostService();
+  final CategoryService _categoryService = CategoryService();
   final ImagePicker _picker = ImagePicker();
 
   final TextEditingController _titleController = TextEditingController();
@@ -26,6 +29,29 @@ class _MyServicesFormScreenState extends State<MyServicesFormScreen> {
 
   File? _imageFile;
   bool _isLoading = false;
+  List<model.Category> _categories = [];
+  model.Category? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() => _isLoading = true);
+    try {
+      final cats = await _categoryService.getAllCategories();
+      if (mounted) {
+        setState(() {
+          _categories = cats;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -57,7 +83,8 @@ class _MyServicesFormScreenState extends State<MyServicesFormScreen> {
         'title': _titleController.text,
         'description': _descriptionController.text,
         'price': double.tryParse(_priceController.text) ?? 0.0,
-        'categoryName': provider.profession ?? 'Service',
+        'categoryName': _selectedCategory?.title ?? provider.profession ?? 'Service',
+        'duration': _durationController.text,
         'images': imageUrl != null ? [imageUrl] : [],
         'status': 'ACTIVE',
       };
@@ -145,14 +172,46 @@ class _MyServicesFormScreenState extends State<MyServicesFormScreen> {
                                 suffix: 'FCFA',
                                 keyboardType: TextInputType.number,
                                 validator: (v) => v!.isEmpty ? 'Requis' : null)),
-                        const SizedBox(width: 15),
-                        Expanded(
-                            child: _buildTextField(
-                                controller: _durationController,
-                                label: 'Durée',
-                                hint: 'Ex: 1h 30',
-                                icon: Icons.timer)),
                       ],
+                    ),
+                    const SizedBox(height: 15),
+                    _buildTextField(
+                        controller: _durationController,
+                        label: 'Durée estimée',
+                        hint: 'Ex: 1h 30, 2 jours, etc.',
+                        icon: Icons.timer,
+                        validator: (v) => v!.isEmpty ? 'Veuillez saisir une durée' : null),
+                    const SizedBox(height: 25),
+                    _buildSectionTitle('Catégorie du service'),
+                    const SizedBox(height: 15),
+                    DropdownButtonFormField<model.Category>(
+                      value: _selectedCategory,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                      ),
+                      hint: const Text('Choisir une catégorie'),
+                      items: _categories.map((cat) {
+                        return DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat.title),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedCategory = val;
+                        });
+                      },
+                      validator: (v) => v == null ? 'Veuillez choisir une catégorie' : null,
                     ),
                     const SizedBox(height: 25),
                     _buildSectionTitle('Média'),
