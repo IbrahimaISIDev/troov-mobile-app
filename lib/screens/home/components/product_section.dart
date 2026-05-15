@@ -1,147 +1,237 @@
 import 'package:flutter/material.dart';
+import '../../../models/product.dart';
 
 class ProductSection extends StatelessWidget {
   final String title;
-  final List<String> images;
+  final List<Product> products;
   final Function(int) onProductTap;
   final VoidCallback onSeeMoreTap;
 
   const ProductSection({
     Key? key,
     required this.title,
-    required this.images,
+    required this.products,
     required this.onProductTap,
     required this.onSeeMoreTap,
   }) : super(key: key);
 
+  bool get _isReTroov => title.startsWith('reTroov.');
+
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final sw = MediaQuery.of(context).size.width;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Troov. ',
-                        style: TextStyle(
-                          fontSize: screenWidth < 600 ? 16 : 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      TextSpan(
-                        text: title.replaceFirst('Troov. ', ''),
-                        style: TextStyle(
-                          fontSize: screenWidth < 600 ? 14 : 16,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Semantics(
-                button: true,
-                label: 'Voir plus',
-                child: TextButton(
-                  onPressed: onSeeMoreTap,
-                  child: Text(
-                    'Voir plus',
-                    style: TextStyle(
-                      fontSize: screenWidth < 600 ? 12 : 14,
-                      color: Colors.blue,
-                    ),
-                  ),
+              Flexible(child: _buildTitle(sw)),
+              TextButton(
+                onPressed: onSeeMoreTap,
+                child: const Text(
+                  'Voir plus',
+                  style: TextStyle(fontSize: 12, color: Colors.blue),
                 ),
               ),
             ],
           ),
-          SizedBox(height: screenWidth * 0.025),
-          Container(
-            height: 150,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: images.length,
-              itemBuilder: (context, index) {
-                return _buildSimpleProductCard(
-                  images[index],
-                  screenWidth,
-                  index,
-                );
-              },
+        ),
+        SizedBox(
+          height: 215,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(left: sw * 0.05, right: sw * 0.01),
+            itemCount: products.length,
+            itemBuilder: (ctx, i) => _buildCard(products[i], i),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildTitle(double sw) {
+    final prefix = _isReTroov ? 'reTroov.' : 'Troov.';
+    final subtitle = title.replaceFirst(RegExp(r'^(re)?Troov\. ?'), '');
+    return RichText(
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: '$prefix ',
+            style: TextStyle(
+              fontSize: sw < 600 ? 15 : 17,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
           ),
-          SizedBox(height: screenWidth * 0.05),
+          TextSpan(
+            text: subtitle,
+            style: TextStyle(
+              fontSize: sw < 600 ? 13 : 15,
+              color: Colors.grey.shade500,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSimpleProductCard(String imagePath, double screenWidth, int index) {
-    final isNetworkImage = imagePath.startsWith('http') || imagePath.startsWith('https');
-    
+  Widget _buildCard(Product product, int index) {
+    const cardW = 130.0;
+    const imgH = 110.0;
+    final hasPromo = product.promoLabel != null && product.promoLabel!.isNotEmpty;
+    final imageUrl = product.images.isNotEmpty
+        ? product.images.first
+        : product.getThumbnailUrl();
+    final isNet = imageUrl.startsWith('http') || imageUrl.startsWith('https');
+
     return GestureDetector(
       onTap: () => onProductTap(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: screenWidth < 600 ? 140 : 120,
-        height: screenWidth < 600 ? 140 : 120,
-        margin: EdgeInsets.only(
-          right: screenWidth * 0.04,
-          left: screenWidth * 0.0125,
-          bottom: screenWidth * 0.025,
-          top: screenWidth * 0.0125,
-        ),
+      child: Container(
+        width: cardW,
+        margin: const EdgeInsets.only(right: 12, bottom: 4, top: 2),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Semantics(
-            image: true,
-            label: 'Produit ${index + 1}',
-            child: isNetworkImage 
-              ? Image.network(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(screenWidth),
-                )
-              : Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(screenWidth),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: SizedBox(
+                    width: cardW,
+                    height: imgH,
+                    child: _buildImage(imageUrl, isNet),
+                  ),
                 ),
-          ),
+                if (hasPromo)
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        product.promoLabel!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (product.price.isNotEmpty)
+                    Text(
+                      product.price,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const SizedBox(height: 2),
+                  Text(
+                    product.title,
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.grey.shade700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 5),
+                  _buildStatusBadge(product),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildErrorPlaceholder(double screenWidth) {
+  Widget _buildStatusBadge(Product product) {
+    final label = (product.status != null && product.status!.isNotEmpty)
+        ? product.status!
+        : product.category;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.grey.shade300, width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(width: 3),
+          Icon(Icons.shopping_cart_outlined,
+              size: 10, color: Colors.grey.shade500),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImage(String url, bool isNet) {
+    if (isNet) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
+    }
+    if (url.isNotEmpty) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
+    }
+    return _placeholder();
+  }
+
+  Widget _placeholder() {
     return Container(
       color: Colors.grey.shade200,
       child: Center(
         child: Icon(
           Icons.image_not_supported_outlined,
-          size: screenWidth < 600 ? 30 : 35,
           color: Colors.grey.shade400,
+          size: 28,
         ),
       ),
     );

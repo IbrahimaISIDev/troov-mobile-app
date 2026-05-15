@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'components/home_tab_header.dart';
 import 'components/main_image_section.dart';
 import 'components/product_section.dart';
+import 'components/ads_section.dart';
 import '../notifications/notifications_screen.dart';
 import '../space/my_space_screen.dart';
 
@@ -298,7 +299,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     
                     ..._buildDynamicProductSections(),
 
-                    const SizedBox(height: 100), // Espace pour la navigation
+                    AdsSection(onTap: widget.onNavigateToServices),
+
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
@@ -322,40 +325,40 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     }
 
     List<Widget> sections = [];
-    
+
     for (var cat in _categories) {
-      // Filter products for this category
-      final catProducts = _popularProducts.where((p) => 
-        p.category.toLowerCase() == cat.title.toLowerCase()
-      ).toList();
+      final catProducts = _popularProducts
+          .where((p) => p.category.toLowerCase() == cat.title.toLowerCase())
+          .toList();
 
       if (catProducts.isEmpty) continue;
 
-      // Logic for title and sorting
-      String title = cat.title;
+      String subtitle;
       List<Product> displayProducts = List.from(catProducts);
 
       if (cat.title.toLowerCase().contains('mobilier')) {
-        title = "le mobilier d'occasion à bon prix";
-        // Sort by cheapest for "bon prix"
+        subtitle = "le mobilier d'occasion à bon prix";
         displayProducts.sort((a, b) => a.numericPrice.compareTo(b.numericPrice));
       } else if (cat.title.toLowerCase().contains('transfert')) {
-        title = "transferts d'argent au meilleur prix";
+        subtitle = "transferts d'argent au meilleur prix";
       } else {
-        title = "${cat.title} de qualité";
+        subtitle = "${cat.title} de qualité";
       }
+
+      final isFoodCategory = cat.title.toLowerCase().contains('cook') ||
+          cat.title.toLowerCase().contains('food') ||
+          cat.title.toLowerCase().contains('aliment') ||
+          cat.title.toLowerCase().contains('cuisine') ||
+          cat.title.toLowerCase().contains('repas');
+
+      final prefix = isFoodCategory ? 'reTroov.' : 'Troov.';
 
       sections.add(
         ProductSection(
-          title: "Troov. $title",
-          images: displayProducts.map((p) => p.getThumbnailUrl()).toList(),
-          onProductTap: (index) {
-            // Navigate to product detail or services
-            widget.onNavigateToServices();
-          },
-          onSeeMoreTap: () {
-            widget.onNavigateToServices();
-          },
+          title: "$prefix $subtitle",
+          products: displayProducts,
+          onProductTap: (_) => widget.onNavigateToServices(),
+          onSeeMoreTap: widget.onNavigateToServices,
         ),
       );
     }

@@ -1,123 +1,137 @@
 import 'package:flutter/material.dart';
 
-class AdsSection extends StatelessWidget {
-  final Function(int) onAdTap;
+class _Deal {
+  final String image;
+  final String buttonLabel;
+  const _Deal({required this.image, required this.buttonLabel});
+}
 
-  const AdsSection({
-    Key? key,
-    required this.onAdTap,
-  }) : super(key: key);
+class AdsSection extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const AdsSection({Key? key, this.onTap}) : super(key: key);
+
+  static const List<_Deal> _deals = [
+    _Deal(image: 'assets/images/image1.png', buttonLabel: 'RÉSERVER'),
+    _Deal(image: 'assets/images/image3.png', buttonLabel: 'RÉSERVER'),
+    _Deal(image: 'assets/images/image5.png', buttonLabel: 'PROFITER'),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Publicités',
-            style: TextStyle(
-              fontSize: screenWidth < 600 ? 18 : 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+    final sw = MediaQuery.of(context).size.width;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Troov. ',
+                  style: TextStyle(
+                    fontSize: sw < 600 ? 15 : 17,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                TextSpan(
+                  text: 'le meilleur des plans, deals et divertissements',
+                  style: TextStyle(
+                    fontSize: sw < 600 ? 13 : 15,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: screenWidth * 0.04),
-            Padding(
-            padding: EdgeInsets.only(bottom: screenWidth * 0.02),
-            child: Container(
-              height: screenWidth < 600 ? 160 : 180,
-              child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 3,
-              itemBuilder: (context, index) {
-                return _buildAdCard(index, screenWidth);
-              },
-              ),
-            ),
-            ),
-          SizedBox(height: screenWidth * 0.05),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 210,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(left: sw * 0.05),
+            itemCount: _deals.length,
+            itemBuilder: (ctx, i) => _buildDealCard(_deals[i], sw),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
-  Widget _buildAdCard(int index, double screenWidth) {
-    List<Color> adColors = [
-      Colors.blue.shade400,
-      Colors.green.shade400,
-      Colors.orange.shade400,
-    ];
-
-    return GestureDetector(
-      onTap: () => onAdTap(index),
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        width: screenWidth < 600 ? 260 : 280,
-        margin: EdgeInsets.only(
-            right: screenWidth * 0.04, left: screenWidth * 0.0125),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Semantics(
-            image: true,
-            label: 'Publicité ${index + 1}',
-            child: Image.asset(
-              'assets/images/refri.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                print(
-                    "Erreur de chargement de l'image publicitaire ${index + 1}: $error");
-                return Container(
-                  color: adColors[index % adColors.length],
+  Widget _buildDealCard(_Deal deal, double sw) {
+    return Container(
+      width: sw * 0.55,
+      margin: const EdgeInsets.only(right: 14, bottom: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: Image.asset(
+                deal.image,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.grey.shade200,
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.image_not_supported,
-                          size: screenWidth < 600 ? 50 : 60,
-                          color: Colors.white70,
-                        ),
-                        SizedBox(height: screenWidth * 0.025),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.03,
-                            vertical: screenWidth * 0.015,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Publicité ${index + 1}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth < 600 ? 12 : 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.grey.shade400,
+                      size: 32,
                     ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
-        ),
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius:
+                  BorderRadius.vertical(bottom: Radius.circular(12)),
+            ),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: GestureDetector(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: const Color(0xFF215E8C), width: 1.5),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Center(
+                  child: Text(
+                    deal.buttonLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF215E8C),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
