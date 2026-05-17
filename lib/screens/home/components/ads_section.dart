@@ -26,6 +26,8 @@ class AdsSection extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
           child: RichText(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             text: TextSpan(
               children: [
                 TextSpan(
@@ -34,25 +36,27 @@ class AdsSection extends StatelessWidget {
                     fontSize: sw < 600 ? 15 : 17,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
+                    fontFamily: 'Montserrat',
                   ),
                 ),
                 TextSpan(
-                  text: 'le meilleur des plans, deals et divertissements',
+                  text: 'les meilleurs plans de divertissement sur Dakar',
                   style: TextStyle(
                     fontSize: sw < 600 ? 13 : 15,
                     color: Colors.grey.shade500,
+                    fontFamily: 'Montserrat',
                   ),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         SizedBox(
-          height: 210,
+          height: 310,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(left: sw * 0.05),
+            padding: EdgeInsets.only(left: sw * 0.05, right: sw * 0.01),
             itemCount: _deals.length,
             itemBuilder: (ctx, i) => _buildDealCard(_deals[i], sw),
           ),
@@ -63,75 +67,103 @@ class AdsSection extends StatelessWidget {
   }
 
   Widget _buildDealCard(_Deal deal, double sw) {
-    return Container(
-      width: sw * 0.55,
-      margin: const EdgeInsets.only(right: 14, bottom: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Image.asset(
-                deal.image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey.shade200,
-                  child: Center(
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      color: Colors.grey.shade400,
-                      size: 32,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 16),
+        color: Colors.transparent,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // The poster image with 36px circular radius
+            Container(
+              height: 250,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(36),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(36),
+                child: Image.asset(
+                  deal.image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey.shade200,
+                    child: Center(
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey.shade400,
+                        size: 32,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(12)),
-            ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: GestureDetector(
-              onTap: onTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: const Color(0xFF215E8C), width: 1.5),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Center(
+            const SizedBox(height: 8),
+            // The bottom details row with grey capsule button
+            Row(
+              children: [
+                // Pill button
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8F9394), // Mockup grey
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Text(
                     deal.buttonLabel,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 8,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF215E8C),
-                      letterSpacing: 0.8,
+                      color: Colors.white,
+                      fontFamily: 'Montserrat',
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 6),
+                // Text details on the right
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Plus de 2 places dispo',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                      SizedBox(height: 1),
+                      Text(
+                        "L'ardoise et +",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 7.5,
+                          color: Colors.grey,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

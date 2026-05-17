@@ -15,6 +15,7 @@ import '../../services/category_service.dart';
 import '../../services/activity_service.dart';
 import '../../services/auth_service.dart';
 import 'package:intl/intl.dart';
+import '../home/components/product_card.dart';
 
 class ServicesScreen extends StatefulWidget {
   final sm.ServiceCategory? initialCategory;
@@ -36,7 +37,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   sm.ServiceCategory? _selectedCategory;
   ProviderProfile? _selectedProvider;
   List<ProviderProfile> _filteredProviders = [];
-  
+
   List<Product> _popularProducts = [];
   List<ProviderProfile> _nearbyProviders = [];
   List<cm.Category> _categories = [];
@@ -87,15 +88,17 @@ class _ServicesScreenState extends State<ServicesScreen> {
       final providers = await _providerService.getAllProviders();
       setState(() {
         _nearbyProviders = providers;
-        _filteredProviders = providers.where((p) => 
-          p.specialties.any((s) => s.toLowerCase() == _selectedCategory?.name.toLowerCase())
-        ).toList();
+        _filteredProviders = providers
+            .where((p) => p.specialties.any((s) =>
+                s.toLowerCase() == _selectedCategory?.name.toLowerCase()))
+            .toList();
       });
     } else {
       setState(() {
-        _filteredProviders = _nearbyProviders.where((p) => 
-          p.specialties.any((s) => s.toLowerCase() == _selectedCategory?.name.toLowerCase())
-        ).toList();
+        _filteredProviders = _nearbyProviders
+            .where((p) => p.specialties.any((s) =>
+                s.toLowerCase() == _selectedCategory?.name.toLowerCase()))
+            .toList();
       });
     }
   }
@@ -130,9 +133,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
         bottom: false,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
-          child: _isLoading 
-            ? const Center(child: CircularProgressIndicator())
-            : _buildCurrentView(),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _buildCurrentView(),
         ),
       ),
     );
@@ -155,7 +158,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
     }
 
     if (_showProvidersList && _selectedCategory != null) {
-      final smProviders = _filteredProviders.map(_mapProfileToServiceProvider).toList();
+      final smProviders =
+          _filteredProviders.map(_mapProfileToServiceProvider).toList();
       return ServiceProviderList(
         category: _selectedCategory!,
         providers: smProviders,
@@ -168,7 +172,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
         },
         onProviderTap: (provider) {
           setState(() {
-            _selectedProvider = _nearbyProviders.firstWhere((p) => p.id == provider.id);
+            _selectedProvider =
+                _nearbyProviders.firstWhere((p) => p.id == provider.id);
             _showProviderDetail = true;
           });
           widget.onHideBottomBar?.call(true);
@@ -207,8 +212,32 @@ class _ServicesScreenState extends State<ServicesScreen> {
               },
             ),
           ),
-  
-          // Services populaires
+
+          // 1. Catégories de services (En premier !)
+          SliverToBoxAdapter(
+            child: ServiceCategories(
+              categories: _categories
+                  .map((c) => sm.ServiceCategory(
+                        id: c.id?.toString() ?? 'cat',
+                        name: c.title,
+                        icon: _getIconForCategory(c.title),
+                        color: _getColorForCategory(c.color),
+                        description: c.description,
+                        providerCount: c.totalProducts,
+                      ))
+                  .toList(),
+              onCategoryTap: (category) {
+                _selectServiceCategory(category);
+              },
+            ),
+          ),
+
+          // 2. Section "Près de chez vous"
+          SliverToBoxAdapter(
+            child: _buildNearbySection(),
+          ),
+
+          // 3. Services populaires
           SliverToBoxAdapter(
             child: PopularServices(
               products: _popularProducts,
@@ -220,33 +249,82 @@ class _ServicesScreenState extends State<ServicesScreen> {
               },
             ),
           ),
-  
-          // Section "Près de chez vous"
+
+          // 4. Tous les services (Nouveau !)
           SliverToBoxAdapter(
-            child: _buildNearbySection(),
+            child: _buildAllServicesSection(),
           ),
-  
-          // Catégories de services
-          SliverToBoxAdapter(
-            child: ServiceCategories(
-              categories: _categories.map((c) => sm.ServiceCategory(
-                id: c.id?.toString() ?? 'cat',
-                name: c.title,
-                icon: _getIconForCategory(c.title),
-                color: _getColorForCategory(c.color),
-                description: c.description,
-                providerCount: c.totalProducts,
-              )).toList(),
-              onCategoryTap: (category) {
-                _selectServiceCategory(category);
-              },
-            ),
-          ),
-  
+
           // Espace pour la navigation
           const SliverToBoxAdapter(
             child: SizedBox(height: 100),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllServicesSection() {
+    final sw = MediaQuery.of(context).size.width;
+    final displayProducts = _popularProducts;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: 8,
+        horizontal: sw * 0.05,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Tous les services',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  fontFamily: 'Montserrat',
+                ),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: Text(
+                  'Voir tout',
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (displayProducts.isEmpty)
+            const Center(child: Text('Aucun service pour le moment'))
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.76, // Generous height room to avoid any RenderFlex overflow
+              ),
+              itemCount: displayProducts.length,
+              itemBuilder: (context, index) {
+                final product = displayProducts[index];
+                return ProductCard(
+                  product: product,
+                  onTap: () => _showPurchaseModal(product),
+                  width: null, // Fill the grid cell width
+                  margin: EdgeInsets.zero, // Remove horizontal list right margins
+                );
+              },
+            ),
         ],
       ),
     );
@@ -275,7 +353,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   Widget _buildNearbySection() {
     return Container(
-      margin: const EdgeInsets.all(10),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -299,36 +377,29 @@ class _ServicesScreenState extends State<ServicesScreen> {
               Icon(
                 Icons.location_on_rounded,
                 color: AppTheme.primaryBlue,
-                size: 24,
+                size: 20,
               ),
               const SizedBox(width: 8),
               const Text(
                 'Près de chez vous',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Découvrez les prestataires les mieux notés dans votre région',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 15),
           if (_nearbyProviders.isEmpty)
-             const Text('Aucun prestataire à proximité')
+            const Text('Aucun prestataire à proximité')
           else
             SizedBox(
               height: 120,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _nearbyProviders.length > 10 ? 10 : _nearbyProviders.length,
+                itemCount:
+                    _nearbyProviders.length > 10 ? 10 : _nearbyProviders.length,
                 itemBuilder: (context, index) {
                   final provider = _nearbyProviders[index];
                   return GestureDetector(
@@ -359,18 +430,24 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           CircleAvatar(
                             radius: 25,
                             backgroundColor: Colors.grey.shade100,
-                            backgroundImage: (provider.logoUrl != null && provider.logoUrl!.isNotEmpty)
-                              ? NetworkImage(provider.logoUrl!)
-                              : null,
-                            child: (provider.logoUrl == null || provider.logoUrl!.isEmpty)
-                              ? const Icon(Icons.person, color: Colors.grey, size: 25)
-                              : null,
+                            backgroundImage: (provider.logoUrl != null &&
+                                    provider.logoUrl!.isNotEmpty)
+                                ? NetworkImage(provider.logoUrl!)
+                                : null,
+                            child: (provider.logoUrl == null ||
+                                    provider.logoUrl!.isEmpty)
+                                ? const Icon(Icons.person,
+                                    color: Colors.grey, size: 25)
+                                : null,
                           ),
                           const SizedBox(height: 8),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4.0),
                             child: Text(
-                              provider.user?.firstName ?? provider.agencyName ?? 'Expert',
+                              provider.user?.firstName ??
+                                  provider.agencyName ??
+                                  'Expert',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -419,26 +496,26 @@ class _ServicesScreenState extends State<ServicesScreen> {
           if (user == null) return;
 
           try {
-            await _activityService.createActivity(
-              product.id,
-              user.id,
-              {
-                'type': 'PURCHASE',
-                'status': 'PENDING',
-                'price': product.numericPrice,
-                'quantity': qty,
-                'description': 'Commande de ${product.title}',
-              }
-            );
+            await _activityService.createActivity(product.id, user.id, {
+              'type': 'PURCHASE',
+              'status': 'PENDING',
+              'price': product.numericPrice,
+              'quantity': qty,
+              'description': 'Commande de ${product.title}',
+            });
             if (mounted) {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Commande effectuée avec succès !'), backgroundColor: Colors.green),
+                const SnackBar(
+                    content: Text('Commande effectuée avec succès !'),
+                    backgroundColor: Colors.green),
               );
             }
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Erreur lors de la commande: $e'), backgroundColor: Colors.red),
+              SnackBar(
+                  content: Text('Erreur lors de la commande: $e'),
+                  backgroundColor: Colors.red),
             );
           }
         },
@@ -456,10 +533,16 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   void _searchGlobally(String query) {
     final filtered = _nearbyProviders.where((provider) {
-      return (provider.agencyName?.toLowerCase().contains(query.toLowerCase()) ?? false) ||
-             (provider.user?.firstName.toLowerCase().contains(query.toLowerCase()) ?? false) ||
-             provider.specialties.any((specialty) =>
-                 specialty.toLowerCase().contains(query.toLowerCase()));
+      return (provider.agencyName
+                  ?.toLowerCase()
+                  .contains(query.toLowerCase()) ??
+              false) ||
+          (provider.user?.firstName
+                  .toLowerCase()
+                  .contains(query.toLowerCase()) ??
+              false) ||
+          provider.specialties.any((specialty) =>
+              specialty.toLowerCase().contains(query.toLowerCase()));
     }).toList();
 
     setState(() {
@@ -479,15 +562,20 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     final providers = _nearbyProviders;
     if (_searchQuery.isEmpty) {
-      _filteredProviders = providers.where((p) => 
-        p.specialties.any((s) => s.toLowerCase() == _selectedCategory?.name.toLowerCase())
-      ).toList();
+      _filteredProviders = providers
+          .where((p) => p.specialties.any(
+              (s) => s.toLowerCase() == _selectedCategory?.name.toLowerCase()))
+          .toList();
     } else {
       _filteredProviders = providers.where((provider) {
-        final matchesQuery = (provider.agencyName?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
+        final matchesQuery = (provider.agencyName
+                    ?.toLowerCase()
+                    .contains(_searchQuery.toLowerCase()) ??
+                false) ||
             provider.specialties.any((specialty) =>
                 specialty.toLowerCase().contains(_searchQuery.toLowerCase()));
-        final matchesCategory = provider.specialties.any((s) => s.toLowerCase() == _selectedCategory?.name.toLowerCase());
+        final matchesCategory = provider.specialties.any(
+            (s) => s.toLowerCase() == _selectedCategory?.name.toLowerCase());
         return matchesQuery && matchesCategory;
       }).toList();
     }
@@ -531,7 +619,7 @@ class _PurchaseModalState extends State<_PurchaseModal> {
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat("#,###", "fr_FR");
-    
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
@@ -563,14 +651,18 @@ class _PurchaseModalState extends State<_PurchaseModal> {
                       height: 200,
                       width: double.infinity,
                       child: widget.product.getThumbnailUrl().isNotEmpty
-                        ? Image.network(widget.product.getThumbnailUrl(), fit: BoxFit.cover)
-                        : Container(color: Colors.grey[200], child: const Icon(Icons.image, size: 50)),
+                          ? Image.network(widget.product.getThumbnailUrl(),
+                              fit: BoxFit.cover)
+                          : Container(
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.image, size: 50)),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Text(
                     widget.product.title,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -581,10 +673,9 @@ class _PurchaseModalState extends State<_PurchaseModal> {
                   Text(
                     '${currencyFormat.format(widget.product.numericPrice)} FCFA',
                     style: TextStyle(
-                      fontSize: 20, 
-                      fontWeight: FontWeight.bold, 
-                      color: AppTheme.primaryBlue
-                    ),
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue),
                   ),
                   const Divider(height: 30),
                   const Text(
@@ -603,7 +694,8 @@ class _PurchaseModalState extends State<_PurchaseModal> {
                     children: [
                       const Text(
                         'Quantité',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -613,12 +705,14 @@ class _PurchaseModalState extends State<_PurchaseModal> {
                         child: Row(
                           children: [
                             IconButton(
-                              onPressed: () => setState(() => _quantity > 1 ? _quantity-- : null),
+                              onPressed: () => setState(
+                                  () => _quantity > 1 ? _quantity-- : null),
                               icon: const Icon(Icons.remove),
                             ),
                             Text(
                               '$_quantity',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             IconButton(
                               onPressed: () => setState(() => _quantity++),
@@ -647,7 +741,8 @@ class _PurchaseModalState extends State<_PurchaseModal> {
                       const Text('Total', style: TextStyle(color: Colors.grey)),
                       Text(
                         '${currencyFormat.format(widget.product.numericPrice * _quantity)} F',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -660,11 +755,15 @@ class _PurchaseModalState extends State<_PurchaseModal> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlue,
                       padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
                     ),
                     child: const Text(
                       'Commandé',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ),
                 ),

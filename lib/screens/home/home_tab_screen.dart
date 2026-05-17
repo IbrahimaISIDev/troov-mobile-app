@@ -3,6 +3,7 @@ import 'components/home_tab_header.dart';
 import 'components/main_image_section.dart';
 import 'components/product_section.dart';
 import 'components/ads_section.dart';
+import 'components/discover_section.dart';
 import '../notifications/notifications_screen.dart';
 import '../space/my_space_screen.dart';
 
@@ -296,7 +297,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       onDiscoverTap: () {},
                     ),
                     _buildHomeTaglineAndStats(context),
-                    
+                    DiscoverSection(
+                      onTap: widget.onNavigateToServices,
+                    ),
+
                     ..._buildDynamicProductSections(),
 
                     AdsSection(onTap: widget.onNavigateToServices),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/product.dart';
-import '../../utils/theme.dart';
+import '../home/components/product_card.dart';
 
 class PopularServices extends StatelessWidget {
   final List<Product> products;
@@ -35,12 +35,13 @@ class PopularServices extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   'Services populaires',
                   style: TextStyle(
-                    fontSize: screenWidth < 600 ? 18 : 20,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
+                    fontFamily: 'Montserrat',
                   ),
                 ),
                 TextButton(
@@ -61,152 +62,25 @@ class PopularServices extends StatelessWidget {
           if (displayProducts.isEmpty)
             const Center(child: Text('Aucun service populaire pour le moment'))
           else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final cardHeight = 200.0;
-                return SizedBox(
-                  height: cardHeight,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.01,
-                        vertical: screenHeight * 0.01),
-                    itemCount: displayProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = displayProducts[index];
-                      return _buildPopularProductCard(
-                          product, context, cardHeight);
-                    },
-                  ),
-                );
-              },
+            SizedBox(
+              height: 220,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.01,
+                  vertical: screenHeight * 0.01,
+                ),
+                itemCount: displayProducts.length,
+                itemBuilder: (context, index) {
+                  final product = displayProducts[index];
+                  return ProductCard(
+                    product: product,
+                    onTap: () => onServiceTap(product),
+                  );
+                },
+              ),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPopularProductCard(
-      Product product, BuildContext context, double cardHeight) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth < 600 ? 140 : 160;
-
-    return Container(
-      width: cardWidth.toDouble(),
-      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.015),
-      child: InkWell(
-        onTap: () => onServiceTap(product),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image or Video Thumbnail
-                Expanded(
-                  flex: 5,
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        color: Colors.grey.shade100,
-                        child: product.getThumbnailUrl().isNotEmpty
-                            ? Image.network(
-                                product.getThumbnailUrl(),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.image, color: Colors.grey),
-                              )
-                            : const Icon(Icons.image, color: Colors.grey),
-                      ),
-                      GreenPromoLabel(product),
-                    ],
-                  ),
-                ),
-                // Details
-                Expanded(
-                  flex: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          product.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          product.category,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${product.numericPrice.toInt()} F',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryBlue,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Icon(Icons.star, color: Colors.amber, size: 12),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget GreenPromoLabel(Product product) {
-    if (product.promoLabel == null) return const SizedBox.shrink();
-    return Positioned(
-      top: 8,
-      right: 8,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: Colors.green,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          product.promoLabel!,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
       ),
     );
   }

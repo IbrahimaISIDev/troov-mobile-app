@@ -21,19 +21,21 @@ class ServiceCategories extends StatelessWidget {
     final childAspectRatio = screenWidth < 600 ? 1.3 : 1.5;
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: 20,
-        horizontal: screenWidth * 0.02,
+      padding: EdgeInsets.only(
+        top: 10,
+        bottom: 0,
+        left: screenWidth * 0.02,
+        right: screenWidth * 0.02,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
-            child: Text(
+            child: const Text(
               'Toutes les catégories',
               style: TextStyle(
-                fontSize: screenWidth < 600 ? 18 : 20,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
@@ -41,6 +43,7 @@ class ServiceCategories extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GridView.builder(
+            padding: const EdgeInsets.only(bottom: 20),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -150,7 +153,7 @@ class ServiceCategories extends StatelessWidget {
                 ),
               ),
             ],
-            const Spacer(),
+            // const Spacer(),
             Row(
               children: [
                 Text(
