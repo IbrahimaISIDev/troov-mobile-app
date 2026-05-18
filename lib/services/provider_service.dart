@@ -65,6 +65,34 @@ class ProviderService {
     }
   }
 
+  Future<ProviderProfile?> registerProvider(Map<String, dynamic> providerData) async {
+    final token = await AuthService().getToken();
+    final url = Uri.parse('$_baseUrl/providers/register');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(providerData),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> data =
+            json.decode(utf8.decode(response.bodyBytes));
+        return ProviderProfile.fromJson(data);
+      }
+      
+      final errorData = json.decode(utf8.decode(response.bodyBytes));
+      throw Exception(errorData['message'] ?? 'Erreur serveur (${response.statusCode})');
+    } catch (e) {
+      print('ProviderService: Error registering provider: $e');
+      rethrow;
+    }
+  }
+
   Future<ProviderProfile?> updateProvider(
       String id, Map<String, dynamic> providerData) async {
     final token = await AuthService().getToken();

@@ -18,6 +18,7 @@ class ProviderProfile {
   final int likes;
   final String? profession;
   final String? logoUrl;
+  final String subscriptionType;
 
   ProviderProfile({
     this.id,
@@ -37,6 +38,7 @@ class ProviderProfile {
     this.likes = 0,
     this.profession,
     this.logoUrl,
+    this.subscriptionType = 'STANDARD',
   });
 
   factory ProviderProfile.fromJson(Map<String, dynamic> json) {
@@ -60,9 +62,10 @@ class ProviderProfile {
       likes: json['likes'] ?? 0,
       profession: json['profession'],
       logoUrl: json['logoUrl'],
+      subscriptionType: json['subscriptionType'] ?? 'STANDARD',
     );
   }
-
+ 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -82,6 +85,7 @@ class ProviderProfile {
       'likes': likes,
       'profession': profession,
       'logoUrl': logoUrl,
+      'subscriptionType': subscriptionType,
     };
   }
 

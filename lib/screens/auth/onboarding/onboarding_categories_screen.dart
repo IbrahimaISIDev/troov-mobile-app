@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/theme.dart';
 import '../../../models/user.dart' show ServiceCategory;
 import '../../../services/auth_service.dart';
-import 'onboarding_success_screen.dart';
+import 'onboarding_provider_screen.dart';
 
 class OnboardingCategoriesScreen extends StatefulWidget {
   final String acquisitionSource;
@@ -45,7 +45,7 @@ class _OnboardingCategoriesScreenState extends State<OnboardingCategoriesScreen>
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const OnboardingSuccessScreen()),
+          MaterialPageRoute(builder: (context) => const OnboardingProviderScreen()),
         );
       }
     } catch (e) {

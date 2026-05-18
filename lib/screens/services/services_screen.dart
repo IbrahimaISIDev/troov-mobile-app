@@ -12,10 +12,8 @@ import '../../models/category_model.dart' as cm;
 import '../../services/product_service.dart';
 import '../../services/provider_service.dart';
 import '../../services/category_service.dart';
-import '../../services/activity_service.dart';
-import '../../services/auth_service.dart';
-import 'package:intl/intl.dart';
 import '../home/components/product_card.dart';
+import '../../widgets/product_detail_modal.dart';
 
 class ServicesScreen extends StatefulWidget {
   final sm.ServiceCategory? initialCategory;
@@ -31,7 +29,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
   final ProductService _productService = ProductService();
   final ProviderService _providerService = ProviderService();
   final CategoryService _categoryService = CategoryService();
-  final ActivityService _activityService = ActivityService();
 
   String _searchQuery = '';
   sm.ServiceCategory? _selectedCategory;
@@ -485,42 +482,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   void _showPurchaseModal(Product product) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _PurchaseModal(
-        product: product,
-        onOrder: (qty) async {
-          final user = await AuthService().getCurrentUser();
-          if (user == null) return;
-
-          try {
-            await _activityService.createActivity(product.id, user.id, {
-              'type': 'PURCHASE',
-              'status': 'PENDING',
-              'price': product.numericPrice,
-              'quantity': qty,
-              'description': 'Commande de ${product.title}',
-            });
-            if (mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Commande effectuée avec succès !'),
-                    backgroundColor: Colors.green),
-              );
-            }
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text('Erreur lors de la commande: $e'),
-                  backgroundColor: Colors.red),
-            );
-          }
-        },
-      ),
-    );
+    ProductDetailModal.show(context, product);
   }
 
   void _selectServiceCategory(sm.ServiceCategory category) {
@@ -598,180 +560,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
       completedJobs: profile.totalMissions,
       hourlyRate: 5000, // Default or fetch from somewhere
       availability: profile.status == ProviderStatus.AVAILABLE,
-      portfolio: [],
-    );
-  }
-}
-
-class _PurchaseModal extends StatefulWidget {
-  final Product product;
-  final Function(int) onOrder;
-
-  const _PurchaseModal({required this.product, required this.onOrder});
-
-  @override
-  State<_PurchaseModal> createState() => _PurchaseModalState();
-}
-
-class _PurchaseModalState extends State<_PurchaseModal> {
-  int _quantity = 1;
-
-  @override
-  Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat("#,###", "fr_FR");
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Container(
-            width: 40,
-            height: 5,
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2.5),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product Preview
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: SizedBox(
-                      height: 200,
-                      width: double.infinity,
-                      child: widget.product.getThumbnailUrl().isNotEmpty
-                          ? Image.network(widget.product.getThumbnailUrl(),
-                              fit: BoxFit.cover)
-                          : Container(
-                              color: Colors.grey[200],
-                              child: const Icon(Icons.image, size: 50)),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    widget.product.title,
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Catégorie: ${widget.product.category}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    '${currencyFormat.format(widget.product.numericPrice)} FCFA',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryBlue),
-                  ),
-                  const Divider(height: 30),
-                  const Text(
-                    'Description',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.product.description,
-                    style: TextStyle(color: Colors.grey[700], height: 1.5),
-                  ),
-                  const SizedBox(height: 30),
-                  // Quantity
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Quantité',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              onPressed: () => setState(
-                                  () => _quantity > 1 ? _quantity-- : null),
-                              icon: const Icon(Icons.remove),
-                            ),
-                            Text(
-                              '$_quantity',
-                              style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            IconButton(
-                              onPressed: () => setState(() => _quantity++),
-                              icon: const Icon(Icons.add),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-          // Footer with Action
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('Total', style: TextStyle(color: Colors.grey)),
-                      Text(
-                        '${currencyFormat.format(widget.product.numericPrice * _quantity)} F',
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: () => widget.onOrder(_quantity),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                    ),
-                    child: const Text(
-                      'Commandé',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      portfolio: const [],
     );
   }
 }

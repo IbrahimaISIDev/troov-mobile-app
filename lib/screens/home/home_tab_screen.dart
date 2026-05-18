@@ -19,6 +19,7 @@ import '../../widgets/story_status_avatar.dart';
 import 'create_text_status_screen.dart';
 import 'create_media_status_screen.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../widgets/product_detail_modal.dart';
 
 class HomeTabScreen extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -361,7 +362,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         ProductSection(
           title: "$prefix $subtitle",
           products: displayProducts,
-          onProductTap: (_) => widget.onNavigateToServices(),
+          onProductTap: (index) {
+            ProductDetailModal.show(context, displayProducts[index]);
+          },
           onSeeMoreTap: widget.onNavigateToServices,
         ),
       );
